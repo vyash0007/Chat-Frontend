@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/user';
 import { Chat } from '@/types';
 import { formatDate, truncate, cn } from '@/lib/utils';
+import { useUIStore } from '@/store';
 
 interface ChatListItemProps {
   chat: Chat;
@@ -18,6 +19,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
   isTyping = false,
 }) => {
   const router = useRouter();
+  const { isMobile, setSidebarOpen } = useUIStore();
 
   const otherUser = chat.isGroup ? null : chat.users[0];
   const displayName = chat.name || otherUser?.name || 'Unknown';
@@ -26,6 +28,9 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
 
   const handleClick = () => {
     router.push(`/chats/${chat.id}`);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
