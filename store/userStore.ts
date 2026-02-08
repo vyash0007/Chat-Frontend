@@ -22,6 +22,19 @@ interface UserState {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+function getAuthToken(): string | null {
+  try {
+    const stored = localStorage.getItem('auth-storage');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed?.state?.token || null;
+    }
+  } catch {
+    // fallback
+  }
+  return null;
+}
+
 export const useUserStore = create<UserState>()((set, get) => ({
   users: {},
   onlineUsers: new Set(),
@@ -38,11 +51,11 @@ export const useUserStore = create<UserState>()((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/users/${userId}`, {
-        headers: { Authorization: `Bearer ${JSON.parse(token)}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -71,11 +84,11 @@ export const useUserStore = create<UserState>()((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/users/search?phone=${encodeURIComponent(phone)}`, {
-        headers: { Authorization: `Bearer ${JSON.parse(token)}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -108,11 +121,11 @@ export const useUserStore = create<UserState>()((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/users/search-by-email?email=${encodeURIComponent(email)}`, {
-        headers: { Authorization: `Bearer ${JSON.parse(token)}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
