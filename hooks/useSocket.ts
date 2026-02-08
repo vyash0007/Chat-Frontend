@@ -92,7 +92,7 @@ export const useSocket = () => {
 
   // Return a stable api for components to use. These functions delegate to the
   // singleton socket instance in `lib/socket` so they can be called anywhere.
-  const socket = getSocket(token) || null;
+  const socket = getSocket(token || undefined) || null;
 
   return {
     socket,
