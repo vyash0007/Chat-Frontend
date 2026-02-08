@@ -9,7 +9,6 @@ import { joinChat, leaveChat } from '@/lib/socket';
 export default function ChatPage() {
   const { chatId } = useParams();
   const { activeChat, messages, fetchMessages, setActiveChat } = useChatStore();
-  const { joinChat, leaveChat } = useSocket();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
