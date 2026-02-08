@@ -28,11 +28,23 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
     router.push(`/chats/${chat.id}`);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
   return (
     <button
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role="listitem"
+      tabIndex={0}
+      aria-label={`${displayName}${chat.unreadCount > 0 ? `, ${chat.unreadCount} unread messages` : ''}${isTyping ? ', typing' : ''}`}
+      aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'w-full flex items-center gap-3 p-3 rounded-lg transition-colors',
+        'w-full flex items-center gap-3 p-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:ring-offset-2',
         isActive
           ? 'bg-[var(--background-active)]'
           : 'hover:bg-[var(--background-hover)]'
@@ -40,7 +52,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
     >
       {/* Avatar */}
       {chat.isGroup ? (
-        <div className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white font-semibold flex items-center justify-center text-sm">
+        <div className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white font-semibold flex items-center justify-center text-sm" aria-hidden="true">
           {displayName.slice(0, 2).toUpperCase()}
         </div>
       ) : (
@@ -57,11 +69,12 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
                 ? 'text-[var(--text-primary)]'
                 : 'text-[var(--text-secondary)]'
             )}
+            aria-hidden="true"
           >
             {displayName}
           </h3>
           {lastMessageTime && (
-            <span className="text-xs text-[var(--text-muted)] flex-shrink-0">
+            <span className="text-xs text-[var(--text-muted)] flex-shrink-0" aria-hidden="true">
               {formatDate(lastMessageTime)}
             </span>
           )}
@@ -77,12 +90,13 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
                 ? 'text-[var(--text-primary)] font-medium'
                 : 'text-[var(--text-muted)]'
             )}
+            aria-hidden="true"
           >
             {isTyping ? 'Typing...' : truncate(lastMessageContent, 40)}
           </p>
 
           {chat.unreadCount > 0 && (
-            <span className="flex-shrink-0 bg-[var(--accent-primary)] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="flex-shrink-0 bg-[var(--accent-primary)] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" aria-hidden="true">
               {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
             </span>
           )}
