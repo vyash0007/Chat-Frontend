@@ -71,9 +71,16 @@ export const useSocket = () => {
     });
 
     // Status events
+    socket.on('onlineUsers', (users: { id: string; status: string; lastSeen: Date | null }[]) => {
+      console.log('📋 Initial online users:', users);
+      // Initialize online users in store
+      const onlineUserIds = users.map(u => u.id);
+      useUserStore.getState().setOnlineUsers(onlineUserIds);
+    });
+
     socket.on('userStatusChange', (data: { userId: string; status: string }) => {
       console.log('🟢 User status changed:', data);
-      if (data.status === 'ONLINE') {
+      if (data.status === 'ONLINE' || data.status === 'AWAY' || data.status === 'DO_NOT_DISTURB') {
         addOnlineUser(data.userId);
       } else {
         removeOnlineUser(data.userId);
