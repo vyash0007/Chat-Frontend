@@ -80,10 +80,23 @@ export const useSocket = () => {
 
     socket.on('userStatusChange', (data: { userId: string; status: string }) => {
       console.log('🟢 User status changed:', data);
+
+      // Update online users set
       if (data.status === 'ONLINE' || data.status === 'AWAY' || data.status === 'DO_NOT_DISTURB') {
         addOnlineUser(data.userId);
       } else {
         removeOnlineUser(data.userId);
+      }
+
+      // Update user's cached status
+      updateUserStatus({ userId: data.userId, status: data.status as any, lastSeen: null });
+
+      // If it's the current user, update auth store
+      if (user && data.userId === user.id) {
+        useAuthStore.getState().setUser({
+          ...user,
+          status: data.status as any,
+        });
       }
     });
 

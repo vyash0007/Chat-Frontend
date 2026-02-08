@@ -3,13 +3,24 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/user';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUserStore } from '@/store';
 import { UserStatus } from '@/types';
+import { useSocket } from '@/hooks/useSocket';
 
 export const UserPanel: React.FC = () => {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { onlineUsers } = useUserStore();
+  const { socket } = useSocket();
   const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleStatusChange = (newStatus: UserStatus) => {
+    if (socket && user) {
+      // Emit status change to server
+      socket.emit('updateStatus', { status: newStatus });
+      setShowDropdown(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -17,6 +28,11 @@ export const UserPanel: React.FC = () => {
   };
 
   if (!user) return null;
+
+  // Get real-time status
+  const isOnline = onlineUsers.has(user.id);
+  const displayStatus = isOnline ? 'online' : user.status?.toLowerCase() || 'offline';
+  const statusLabel = displayStatus.replace(/_/g, ' ');
 
   return (
     <div className="relative p-4 border-t border-[var(--divider-color)] bg-[var(--background-tertiary)]">
@@ -31,8 +47,8 @@ export const UserPanel: React.FC = () => {
           <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
             {user.name || 'User'}
           </p>
-          <p className="text-xs text-[var(--text-muted)] truncate">
-            {user.status?.toLowerCase() || 'online'}
+          <p className="text-xs text-[var(--text-muted)] truncate capitalize">
+            {statusLabel}
           </p>
         </div>
 
@@ -85,10 +101,7 @@ export const UserPanel: React.FC = () => {
             ].map(({ status, label, color }) => (
               <button
                 key={status}
-                onClick={() => {
-                  // TODO: Update user status
-                  setShowDropdown(false);
-                }}
+                onClick={() => handleStatusChange(status)}
                 className="w-full px-4 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--background-hover)] transition-colors flex items-center gap-3"
               >
                 <span

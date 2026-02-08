@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { User, UserStatus } from '@/types';
+import { useUserStore } from '@/store';
 import { cn } from '@/lib/utils';
 
 interface UserAvatarProps {
@@ -44,9 +45,14 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   showStatus = false,
   className,
 }) => {
+  const { onlineUsers } = useUserStore();
+
   const displayName = name || user?.name || 'User';
   const displayAvatar = avatar !== undefined ? avatar : user?.avatar;
-  const displayStatus = status || user?.status || UserStatus.OFFLINE;
+
+  // Check real-time online status from WebSocket updates
+  const isOnline = user?.id ? onlineUsers.has(user.id) : false;
+  const displayStatus = status || (isOnline ? UserStatus.ONLINE : (user?.status || UserStatus.OFFLINE));
 
   const initials = displayName
     .split(' ')
