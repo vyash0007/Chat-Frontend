@@ -28,6 +28,19 @@ interface ChatState {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+function getAuthToken(): string | null {
+  try {
+    const stored = localStorage.getItem('auth-storage');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed?.state?.token || null;
+    }
+  } catch {
+    // fallback
+  }
+  return null;
+}
+
 export const useChatStore = create<ChatState>()((set, get) => ({
   chats: [],
   activeChat: null,
@@ -39,11 +52,11 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   fetchChats: async () => {
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/chats`, {
-        headers: { Authorization: `Bearer ${JSON.parse(token)}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -63,11 +76,11 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   fetchMessages: async (chatId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
-        headers: { Authorization: `Bearer ${JSON.parse(token)}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -199,14 +212,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   addReaction: async (messageId: string, emoji: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/messages/${messageId}/reactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${JSON.parse(token)}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ emoji }),
       });
@@ -221,13 +234,13 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   removeReaction: async (messageId: string, emoji: string) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/messages/${messageId}/reactions/${emoji}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${JSON.parse(token)}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -241,14 +254,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
   createChat: async (userIds: string[], name?: string, isGroup: boolean = false) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/chats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${JSON.parse(token)}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ userIds, name, isGroup }),
       });
