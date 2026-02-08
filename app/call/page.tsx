@@ -103,6 +103,19 @@ function CallContent() {
     return () => clearInterval(timer);
   }, [isConnecting]);
 
+  // Handle browser tab close/navigate to ensure media is released
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Stop all media tracks when page is about to unload
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   useEffect(() => {
     if (!socket || !chatId) return;
 
@@ -159,15 +172,38 @@ function CallContent() {
     socket.on('offer', async ({ fromUserId, offer }: { fromUserId: string; offer: any }) => {
       const pc = createPeerConnection(fromUserId);
       if (!pc) return;
-      await pc.setRemoteDescription(offer);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('answer', { chatId, targetUserId: fromUserId, answer });
+
+      // Only process offer if we're in a stable state
+      if (pc.signalingState !== 'stable') {
+        console.warn('[Call] Ignoring offer - connection not in stable state:', pc.signalingState);
+        return;
+      }
+
+      try {
+        await pc.setRemoteDescription(offer);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('answer', { chatId, targetUserId: fromUserId, answer });
+      } catch (err) {
+        console.error('[Call] Error handling offer:', err);
+      }
     });
 
     socket.on('answer', async ({ fromUserId, answer }: { fromUserId: string; answer: any }) => {
       const pc = peersRef.current[fromUserId];
-      if (pc) await pc.setRemoteDescription(answer);
+      if (!pc) return;
+
+      // Only set remote description if we're waiting for an answer
+      if (pc.signalingState !== 'have-local-offer') {
+        console.warn('[Call] Ignoring answer - not waiting for answer:', pc.signalingState);
+        return;
+      }
+
+      try {
+        await pc.setRemoteDescription(answer);
+      } catch (err) {
+        console.error('[Call] Error handling answer:', err);
+      }
     });
 
     socket.on('iceCandidate', ({ fromUserId, candidate }: { fromUserId: string; candidate: any }) => {
@@ -189,9 +225,22 @@ function CallContent() {
     });
 
     return () => {
+      // Cleanup on unmount - ensure camera/mic are released
+      console.log('[Call] Cleaning up call resources...');
+
+      // Close all peer connections
       Object.values(peersRef.current).forEach((pc) => pc.close());
       peersRef.current = {};
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+
+      // Stop all media tracks
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
+          console.log(`[Call] Cleanup: Stopped ${track.kind} track`);
+        });
+        localStreamRef.current = null;
+      }
+
       socket.disconnect();
     };
   }, [createPeerConnection, socket, chatId, isAudioOnly]);
@@ -215,13 +264,31 @@ function CallContent() {
   };
 
   const endCall = () => {
+    // Notify server we're leaving
     if (socket) {
       socket.emit('leaveCall', { chatId });
       socket.disconnect();
     }
+
+    // Close all peer connections
     Object.values(peersRef.current).forEach((pc) => pc.close());
     peersRef.current = {};
-    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+
+    // Stop all media tracks to release camera/mic
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        console.log(`[Call] Stopped ${track.kind} track`);
+      });
+      localStreamRef.current = null;
+    }
+
+    // Clear video element
+    if (localVideo.current) {
+      localVideo.current.srcObject = null;
+    }
+
+    // Navigate back to chat
     router.push(chatId ? `/chats/${chatId}` : '/chats');
   };
 

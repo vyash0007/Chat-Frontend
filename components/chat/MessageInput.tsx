@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageType } from '@/types';
-import { useChatStore } from '@/store';
+import { useChatStore, useAuthStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { API_URL } from '@/lib/constants';
 
@@ -13,9 +13,11 @@ interface MessageInputProps {
 export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
   const [text, setText] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { sendMessage } = useChatStore();
+  const { token } = useAuthStore();
 
   // Auto-resize textarea
   useEffect(() => {
@@ -50,18 +52,26 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadError(null);
 
     try {
       const formData = new FormData();
       formData.append('file', file);
 
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/upload`, {
         method: 'POST',
+        headers,
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Upload failed (${response.status})`);
       }
 
       const data = await response.json();
@@ -85,8 +95,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('File upload failed:', error);
-      // TODO: Show error toast
+      console.error('[Upload] File upload failed:', error);
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+      // Clear error after 5 seconds
+      setTimeout(() => setUploadError(null), 5000);
     } finally {
       setIsUploading(false);
     }
@@ -94,6 +106,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
 
   return (
     <div className="border-t border-[var(--divider-color)] bg-[var(--background-primary)] p-3 sm:p-4">
+      {/* Upload error message */}
+      {uploadError && (
+        <div className="mb-2 p-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-600 text-sm flex items-center gap-2">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{uploadError}</span>
+          <button
+            onClick={() => setUploadError(null)}
+            className="ml-auto p-1 hover:bg-red-500/20 rounded"
+            aria-label="Dismiss error"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
       <div className="flex items-end gap-1.5 sm:gap-2">
         {/* File upload button */}
         <button

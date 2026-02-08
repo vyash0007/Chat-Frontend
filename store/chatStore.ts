@@ -185,15 +185,49 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     // Send message via WebSocket
     const token = getAuthToken();
     const socket = getSocket(token || undefined);
-    if (socket && socket.connected) {
-      socket.emit('sendMessage', {
-        chatId: payload.chatId,
-        content: payload.content,
-        type: payload.type,
-      });
-    } else {
-      console.error('Socket not connected. Cannot send message.');
+
+    if (!socket) {
+      console.error('[Chat] No socket available. Cannot send message.');
+      // Mark message as failed
+      set(state => ({
+        messages: {
+          ...state.messages,
+          [payload.chatId]: state.messages[payload.chatId]?.map(m =>
+            m.id === tempId ? { ...m, status: MessageStatus.FAILED } : m
+          ) || [],
+        },
+      }));
+      return;
     }
+
+    // Ensure socket is connected
+    if (!socket.connected) {
+      console.log('[Chat] Socket not connected, attempting to connect...');
+      socket.connect();
+    }
+
+    // Wait briefly for connection then send
+    const trySendMessage = () => {
+      if (socket.connected) {
+        socket.emit('sendMessage', {
+          chatId: payload.chatId,
+          content: payload.content,
+          type: payload.type,
+        });
+      } else {
+        console.error('[Chat] Socket still not connected. Message may be delayed.');
+        // Socket will emit when connected, so we'll queue it
+        socket.once('connect', () => {
+          socket.emit('sendMessage', {
+            chatId: payload.chatId,
+            content: payload.content,
+            type: payload.type,
+          });
+        });
+      }
+    };
+
+    trySendMessage();
   },
 
   addMessage: (message: Message) => {
