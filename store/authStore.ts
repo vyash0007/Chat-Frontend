@@ -14,6 +14,8 @@ interface AuthState {
   // Actions
   login: (payload: LoginPayload) => Promise<void>;
   verifyOtp: (payload: VerifyOTPPayload) => Promise<void>;
+  loginWithGoogle: () => void;
+  handleGoogleCallback: (token: string) => Promise<void>;
   logout: () => void;
   updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
   setUser: (user: User) => void;
@@ -96,6 +98,46 @@ export const useAuthStore = create<AuthState>()(
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Invalid OTP',
+          });
+          throw error;
+        }
+      },
+
+      loginWithGoogle: () => {
+        // Redirect to backend Google OAuth endpoint
+        window.location.href = `${API_URL}/auth/google`;
+      },
+
+      handleGoogleCallback: async (token: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          // Fetch user info with the token
+          const response = await fetch(`${API_URL}/users/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch user data');
+          }
+
+          const user: User = await response.json();
+
+          // Set cookie for middleware
+          setCookie('auth-token', token, 7);
+
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Authentication failed',
           });
           throw error;
         }
