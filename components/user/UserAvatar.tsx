@@ -50,9 +50,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   const displayName = name || user?.name || 'User';
   const displayAvatar = avatar !== undefined ? avatar : user?.avatar;
 
-  // Check real-time online status from WebSocket updates
-  const isOnline = user?.id ? onlineUsers.has(user.id) : false;
-  const displayStatus = status || (isOnline ? UserStatus.ONLINE : (user?.status || UserStatus.OFFLINE));
+  // Use the actual stored status, or default to OFFLINE
+  const displayStatus = status || user?.status || UserStatus.OFFLINE;
 
   const initials = displayName
     .split(' ')
