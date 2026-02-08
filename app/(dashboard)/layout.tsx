@@ -39,6 +39,8 @@ export default function DashboardLayout({
       setIsMobile(mobile);
       if (mobile) {
         useUIStore.getState().setSidebarOpen(false);
+      } else {
+        useUIStore.getState().setSidebarOpen(true);
       }
     };
 
