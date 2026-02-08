@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { SearchUsersModal } from '@/components/chat/SearchUsersModal';
 import { useAuthStore, useUIStore } from '@/store';
 import { useSocket } from '@/hooks';
 
@@ -66,6 +67,9 @@ export default function DashboardLayout({
       <main className="flex-1 flex flex-col overflow-hidden">
         {children}
       </main>
+
+      {/* Modals */}
+      <SearchUsersModal />
     </div>
   );
 }

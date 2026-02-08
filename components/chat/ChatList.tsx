@@ -3,12 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ChatListItem } from './ChatListItem';
-import { useChatStore } from '@/store';
+import { useChatStore, useUIStore } from '@/store';
 import { Input } from '@/components/ui';
 
 export const ChatList: React.FC = () => {
   const { chatId } = useParams();
   const { chats, fetchChats, typingUsers } = useChatStore();
+  const { openModal } = useUIStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -91,9 +92,7 @@ export const ChatList: React.FC = () => {
       <div className="p-4 border-t border-[var(--divider-color)]">
         <button
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:ring-offset-2"
-          onClick={() => {
-            // TODO: Open create chat modal
-          }}
+          onClick={() => openModal('createChat')}
           aria-label="Create new conversation"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
