@@ -20,11 +20,11 @@ export const Sidebar: React.FC = () => {
           Chats
         </h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* New Chat Button */}
           <button
             onClick={() => setShowNewChatModal(true)}
-            className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors"
+            className="group relative flex items-center justify-center p-2 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--background-hover)] hover:text-[var(--text-primary)] transition-all duration-200"
             aria-label="New chat"
             title="New chat"
           >
@@ -41,7 +41,7 @@ export const Sidebar: React.FC = () => {
           {/* New Group Button */}
           <button
             onClick={() => setShowNewGroupModal(true)}
-            className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors"
+            className="group relative flex items-center justify-center p-2 rounded-xl bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] hover:bg-[var(--accent-primary)] hover:text-white transition-all duration-200 hover:shadow-lg hover:shadow-[var(--accent-primary)]/25"
             aria-label="New group"
             title="New group"
           >
@@ -58,7 +58,7 @@ export const Sidebar: React.FC = () => {
           {isMobile && (
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors"
+              className="p-2 rounded-xl hover:bg-[var(--background-hover)] text-[var(--text-secondary)] transition-colors"
               aria-label="Close sidebar"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
