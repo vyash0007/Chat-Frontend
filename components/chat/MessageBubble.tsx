@@ -105,19 +105,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   return (
     <div
       className={cn(
-        'flex items-end gap-2 mb-3',
+        'flex items-end gap-2 mb-2 sm:mb-3 px-3 sm:px-0',
         isSent ? 'flex-row-reverse' : 'flex-row'
       )}
     >
       {/* Avatar for received messages */}
       {!isSent && message.sender && (
-        <UserAvatar user={message.sender} size="sm" />
+        <UserAvatar user={message.sender} size="sm" className="flex-shrink-0" />
       )}
 
       {/* Message Bubble */}
       <div
         className={cn(
-          'max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm',
+          'max-w-[85%] sm:max-w-[75%] md:max-w-[70%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm',
           isSent
             ? 'bg-[var(--accent-primary)] text-white rounded-tr-sm'
             : 'bg-[var(--background-secondary)] text-[var(--text-primary)] rounded-tl-sm'
@@ -131,7 +131,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         )}
 
         {/* Message content */}
-        {renderContent()}
+        <div className="w-full overflow-hidden">
+          {renderContent()}
+        </div>
 
         {/* Message footer */}
         <div
@@ -159,7 +161,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             {message.reactions.map((reaction, index) => (
               <button
                 key={index}
-                className="flex items-center gap-1 px-2 py-0.5 bg-[var(--background-hover)] rounded-full text-xs hover:bg-[var(--background-active)] transition-colors"
+                className="flex items-center gap-1 px-2 py-0.5 bg-[var(--background-hover)] rounded-full text-xs hover:bg-[var(--background-active)] transition-colors min-h-[28px]"
               >
                 <span>{reaction.emoji}</span>
                 <span className="text-[var(--text-muted)]">
@@ -171,8 +173,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         )}
       </div>
 
-      {/* Spacer for sent messages to maintain alignment */}
-      {isSent && <div className="w-8" />}
+      {/* Spacer for sent messages to maintain alignment - smaller on mobile */}
+      {isSent && <div className="w-6 sm:w-8 flex-shrink-0" />}
     </div>
   );
 };

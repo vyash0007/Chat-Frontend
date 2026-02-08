@@ -92,17 +92,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
   };
 
   return (
-    <div className="border-t border-[var(--divider-color)] bg-[var(--background-primary)] p-4">
-      <div className="flex items-end gap-2">
+    <div className="border-t border-[var(--divider-color)] bg-[var(--background-primary)] p-3 sm:p-4">
+      <div className="flex items-end gap-1.5 sm:gap-2">
         {/* File upload button */}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           aria-label="Upload file"
           title="Upload file"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -121,7 +121,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
         />
 
         {/* Text input */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative min-w-0">
           <textarea
             ref={textareaRef}
             value={text}
@@ -131,18 +131,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
             rows={1}
             disabled={isUploading}
             className={cn(
-              'w-full resize-none rounded-lg border border-[var(--border-color)] bg-[var(--background-secondary)] px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)]',
+              'w-full resize-none rounded-lg border border-[var(--border-color)] bg-[var(--background-secondary)] px-3 sm:px-4 py-2.5 sm:py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)]',
               'focus:border-[var(--border-focus)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)]',
               'disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
-              'max-h-[120px] overflow-y-auto'
+              'max-h-[120px] overflow-y-auto text-base' // text-base prevents zoom on iOS
             )}
-            style={{ minHeight: '44px' }}
+            style={{ minHeight: '44px' }} // Ensure minimum touch target size
           />
         </div>
 
-        {/* Emoji button */}
+        {/* Emoji button - hidden on very small screens */}
         <button
-          className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors"
+          className="hidden xs:flex items-center justify-center p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors flex-shrink-0"
           aria-label="Add emoji"
           title="Emoji"
         >
@@ -161,7 +161,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
           onClick={handleSend}
           disabled={!text.trim() || isUploading}
           className={cn(
-            'p-2 rounded-lg transition-colors font-medium',
+            'p-2 sm:p-2.5 rounded-lg transition-colors font-medium flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center',
             text.trim() && !isUploading
               ? 'bg-[var(--accent-primary)] text-white hover:bg-[var(--accent-hover)]'
               : 'bg-[var(--background-tertiary)] text-[var(--text-muted)] cursor-not-allowed'
@@ -220,7 +220,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
         </div>
       )}
 
-      <p className="mt-2 text-xs text-[var(--text-muted)]">
+      {/* Keyboard hints - hidden on mobile */}
+      <p className="hidden sm:block mt-2 text-xs text-[var(--text-muted)]">
         Press <kbd className="px-1.5 py-0.5 bg-[var(--background-tertiary)] rounded">Enter</kbd> to send,{' '}
         <kbd className="px-1.5 py-0.5 bg-[var(--background-tertiary)] rounded">Shift + Enter</kbd> for new line
       </p>

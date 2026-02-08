@@ -191,3 +191,28 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Safe Area for devices with notches */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Prevent text selection on long press */
+  .no-select {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+  }
+
+  /* Fix for iOS input zoom */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
