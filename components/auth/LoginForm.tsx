@@ -6,7 +6,7 @@ import { PhoneInput } from './PhoneInput';
 import { OTPInput } from './OTPInput';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store';
-import { isValidPhoneNumber, formatPhoneNumberIntl } from 'libphonenumber-js';
+import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -97,7 +97,7 @@ export const LoginForm: React.FC = () => {
         <p className="mt-2 text-[var(--text-secondary)]">
           {step === 'phone'
             ? 'Enter your phone number to get started'
-            : `We sent a code to ${formatPhoneNumberIntl(phone)}`}
+            : `We sent a code to ${parsePhoneNumber(phone)?.formatInternational() || phone}`}
         </p>
       </div>
 
