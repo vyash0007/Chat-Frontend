@@ -3,22 +3,13 @@ import { WS_URL } from './constants';
 
 let socket: Socket | null = null;
 
-export const getSocket = (token?: string) => {
-  if (!socket || !socket.connected) {
-    // If socket doesn't exist or is disconnected, create/reconnect it
-    if (!socket) {
-      socket = io(WS_URL, {
-        auth: {
-          token,
-        },
-        transports: ['websocket'],
-        autoConnect: true, // Auto-connect enabled
-      });
-    } else if (!socket.connected && token) {
-      // Update auth token and reconnect
-      socket.auth = { token };
-      socket.connect();
-    }
+export const getSocket = (token?: string): Socket | null => {
+  if (!socket && token) {
+    socket = io(WS_URL, {
+      auth: { token },
+      transports: ['websocket'],
+      autoConnect: true,
+    });
   }
   return socket;
 };
@@ -29,3 +20,32 @@ export const disconnectSocket = () => {
     socket = null;
   }
 };
+
+export const joinChat = (chatId: string) => {
+  if (socket && socket.connected) {
+    console.log('📍 Joining chat:', chatId);
+    socket.emit('joinChat', { chatId });
+  } else {
+    console.warn('Socket not connected, cannot join chat:', chatId);
+  }
+};
+
+export const leaveChat = (chatId: string) => {
+  if (socket && socket.connected) {
+    console.log('🚪 Leaving chat:', chatId);
+    socket.emit('leaveChat', { chatId });
+  }
+};
+
+export const emitTyping = (chatId: string) => {
+  if (socket && socket.connected) {
+    socket.emit('typing', { chatId });
+  }
+};
+
+export const emitStopTyping = (chatId: string) => {
+  if (socket && socket.connected) {
+    socket.emit('stopTyping', { chatId });
+  }
+};
+

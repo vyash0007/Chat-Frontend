@@ -295,9 +295,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
       const newChat: Chat = await response.json();
 
-      set(state => ({
-        chats: [newChat, ...state.chats],
-      }));
+      // Only add to list if it doesn't already exist (backend may return existing chat)
+      set(state => {
+        const exists = state.chats.some(c => c.id === newChat.id);
+        if (exists) {
+          return { chats: state.chats };
+        }
+        return { chats: [newChat, ...state.chats] };
+      });
 
       return newChat;
     } catch (error) {

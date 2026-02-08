@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { ChatHeader, MessageBubble, MessageInput } from '@/components/chat';
 import { useChatStore } from '@/store';
-import { useSocket } from '@/hooks';
+import { joinChat, leaveChat } from '@/lib/socket';
 
 export default function ChatPage() {
   const { chatId } = useParams();
