@@ -108,7 +108,7 @@ export const LoginForm: React.FC = () => {
             {/* Google Sign-In Button */}
             <Button
               onClick={loginWithGoogle}
-              variant="outline"
+              variant="secondary"
               fullWidth
               size="lg"
               className="border-2 hover:bg-[var(--background-hover)] transition-colors"
