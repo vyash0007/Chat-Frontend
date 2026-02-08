@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/user';
 import { Chat, User } from '@/types';
-import { useUIStore, useAuthStore } from '@/store';
+import { useUIStore, useAuthStore, useUserStore } from '@/store';
 import { InviteModal } from './InviteModal';
 
 interface ChatHeaderProps {
@@ -17,14 +17,22 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
   const { user: currentUser } = useAuthStore();
   const [showInviteModal, setShowInviteModal] = useState(false);
 
-  if (!chat) return null;
-
   // For 1-on-1 chats, find the OTHER user (not the current user)
-  const otherUser = chat.isGroup
-    ? null
-    : chat.users?.find(u => u.id !== currentUser?.id);
-  const displayName = chat.name || otherUser?.name || 'Unknown';
-  const onlineStatus = otherUser?.status === 'ONLINE';
+  const otherUser = useMemo(() => {
+    if (chat?.isGroup) return null;
+    return chat?.users?.find(u => u.id !== currentUser?.id) || null;
+  }, [chat?.isGroup, chat?.users, currentUser?.id]);
+
+  const otherUserId = otherUser?.id;
+
+  // Use stable selector with primitive dependency
+  const onlineStatus = useUserStore(
+    useCallback((state) => otherUserId ? state.onlineUsers.has(otherUserId) : false, [otherUserId])
+  );
+
+  const displayName = chat?.name || otherUser?.name || 'Unknown';
+
+  if (!chat) return null;
 
   const handleVideoCall = () => {
     router.push(`/call?chatId=${chat.id}`);

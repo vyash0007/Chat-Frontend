@@ -64,7 +64,53 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         throw new Error('Failed to fetch chats');
       }
 
-      const chats: Chat[] = await response.json();
+      const rawChats = await response.json();
+
+      // Transform backend response to match frontend Chat type
+      // Backend returns messages[] array, but frontend expects lastMessage object
+      const transformedChats: Chat[] = rawChats.map((chat: any) => ({
+        ...chat,
+        lastMessage: chat.messages?.[0] || null,
+        unreadCount: chat.unreadCount ?? 0,
+      }));
+
+      // Filter out self-chats (where both users are the same person) and deduplicate
+      const seenIds = new Set<string>();
+
+      // Get current user ID from auth storage
+      let currentUserId: string | null = null;
+      try {
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          currentUserId = parsed?.state?.user?.id || null;
+        }
+      } catch {
+        // Ignore parse errors
+      }
+
+      const chats = transformedChats.filter((chat: Chat) => {
+        // Skip ID duplicates
+        if (seenIds.has(chat.id)) return false;
+        seenIds.add(chat.id);
+
+        // For 1-on-1 chats, filter out self-chats AND deduplicate by other user
+        if (!chat.isGroup && currentUserId && chat.users) {
+          // Find the other user (not the current user)
+          const otherUser = chat.users.find(u => u.id !== currentUserId);
+
+          // If there's no other user, this is a self-chat - filter out
+          if (!otherUser) return false;
+
+          // Deduplicate: only keep one chat per other user (first one is most recent due to sort order)
+          const otherUserId = otherUser.id;
+          if (seenIds.has(`user:${otherUserId}`)) return false;
+          seenIds.add(`user:${otherUserId}`);
+        }
+
+        return true;
+      });
+
       set({ chats, isLoading: false });
     } catch (error) {
       set({
