@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
 
   // Public paths that don't require authentication
-  const publicPaths = ['/login', '/', '/auth/callback'];
+  const publicPaths = ['/login', '/', '/auth/callback', '/invitation/accept'];
 
   // Protected paths that require authentication
   const isProtectedPath = pathname.startsWith('/chats') || pathname.startsWith('/call') || pathname === '/profile';

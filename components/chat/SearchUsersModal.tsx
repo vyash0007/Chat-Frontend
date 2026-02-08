@@ -9,12 +9,13 @@ import { User } from '@/types';
 export const SearchUsersModal: React.FC = () => {
   const router = useRouter();
   const { currentModal, closeModal } = useUIStore();
-  const { searchUsers } = useUserStore();
+  const { searchUsers, searchUsersByEmail } = useUserStore();
   const { createChat } = useChatStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [searchMode, setSearchMode] = useState<'phone' | 'email'>('phone');
 
   const isOpen = currentModal === 'createChat';
 
@@ -26,7 +27,12 @@ export const SearchUsersModal: React.FC = () => {
 
     setIsSearching(true);
     try {
-      const results = await searchUsers(searchQuery);
+      let results: User[];
+      if (searchMode === 'email') {
+        results = await searchUsersByEmail(searchQuery);
+      } else {
+        results = await searchUsers(searchQuery);
+      }
       setSearchResults(results);
     } catch (error) {
       console.error('Failed to search users:', error);
@@ -64,11 +70,35 @@ export const SearchUsersModal: React.FC = () => {
       size="md"
     >
       <div className="space-y-4">
+        {/* Search Mode Toggle */}
+        <div className="flex rounded-lg border border-[var(--divider-color)] overflow-hidden">
+          <button
+            onClick={() => { setSearchMode('phone'); setSearchResults([]); setSearchQuery(''); }}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              searchMode === 'phone'
+                ? 'bg-[var(--accent-primary)] text-white'
+                : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Phone Number
+          </button>
+          <button
+            onClick={() => { setSearchMode('email'); setSearchResults([]); setSearchQuery(''); }}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              searchMode === 'email'
+                ? 'bg-[var(--accent-primary)] text-white'
+                : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Email
+          </button>
+        </div>
+
         {/* Search Input */}
         <div className="flex gap-2">
           <Input
             type="text"
-            placeholder="Enter phone number (e.g., +1234567890)"
+            placeholder={searchMode === 'phone' ? 'Enter phone number (e.g., +1234567890)' : 'Enter email address'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -129,7 +159,7 @@ export const SearchUsersModal: React.FC = () => {
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-[var(--accent-primary)] flex items-center justify-center text-white font-medium">
-                          {(user.name || user.phone || 'U')[0].toUpperCase()}
+                          {(user.name || user.phone || user.email || 'U')[0].toUpperCase()}
                         </div>
                       )}
                     </div>
@@ -140,7 +170,7 @@ export const SearchUsersModal: React.FC = () => {
                         {user.name || 'Unknown'}
                       </p>
                       <p className="text-sm text-[var(--text-muted)]">
-                        {user.phone}
+                        {user.phone || user.email}
                       </p>
                       {user.bio && (
                         <p className="text-xs text-[var(--text-muted)] mt-1">

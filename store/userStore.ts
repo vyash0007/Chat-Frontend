@@ -11,7 +11,8 @@ interface UserState {
 
   // Actions
   fetchUser: (userId: string) => Promise<User>;
-  searchUsers: (phone: string) => Promise<User[]>;
+  searchUsers: (query: string) => Promise<User[]>;
+  searchUsersByEmail: (email: string) => Promise<User[]>;
   updateUserStatus: (status: OnlineStatus) => void;
   setOnlineUsers: (userIds: string[]) => void;
   addOnlineUser: (userId: string) => void;
@@ -74,6 +75,43 @@ export const useUserStore = create<UserState>()((set, get) => ({
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(`${API_URL}/users/search?phone=${encodeURIComponent(phone)}`, {
+        headers: { Authorization: `Bearer ${JSON.parse(token)}` },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to search users');
+      }
+
+      const users: User[] = await response.json();
+
+      // Cache the users
+      set(state => {
+        const newUsers = { ...state.users };
+        users.forEach(user => {
+          newUsers[user.id] = user;
+        });
+        return { users: newUsers, isLoading: false };
+      });
+
+      return users;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to search users',
+      });
+      throw error;
+    }
+  },
+
+  searchUsersByEmail: async (email: string) => {
+    if (!email.trim()) return [];
+
+    set({ isLoading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${API_URL}/users/search-by-email?email=${encodeURIComponent(email)}`, {
         headers: { Authorization: `Bearer ${JSON.parse(token)}` },
       });
 

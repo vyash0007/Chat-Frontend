@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
+import { InviteModal } from '@/components/chat/InviteModal';
+import { InvitationType } from '@/types';
 
 const FALLBACK_ICE_SERVERS: RTCConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -18,6 +20,7 @@ export default function CallPage() {
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const CHAT_ID = 'PASTE_CHAT_ID';
   const ACCESS_TOKEN =
@@ -238,10 +241,22 @@ export default function CallPage() {
           {isCameraOff ? 'Camera On' : 'Camera Off'}
         </button>
 
-        <button onClick={endCall} style={{ color: 'red' }}>
+        <button onClick={() => setShowInviteModal(true)} style={{ marginLeft: 10 }}>
+          Invite to Call
+        </button>
+
+        <button onClick={endCall} style={{ color: 'red', marginLeft: 10 }}>
           End Call
         </button>
       </div>
+
+      <InviteModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        chatId={CHAT_ID}
+        chatName="Call Session"
+        defaultType={InvitationType.TEMPORARY_CALL}
+      />
     </div>
   );
 }
