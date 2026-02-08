@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageType } from '@/types';
 import { useChatStore } from '@/store';
 import { cn } from '@/lib/utils';
+import { API_URL } from '@/lib/constants';
 
 interface MessageInputProps {
   chatId: string;
@@ -54,7 +55,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://localhost:3001/upload', {
+      const response = await fetch(`${API_URL}/upload`, {
         method: 'POST',
         body: formData,
       });

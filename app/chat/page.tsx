@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { getSocket } from '@/lib/socket';
+import { API_URL } from '@/lib/constants';
 
 type Message = {
   id: string;
@@ -27,7 +28,7 @@ export default function ChatPage() {
   const fetchMessages = async () => {
     try {
       const res = await fetch(
-        `http://localhost:3001/chats/${CHAT_ID}/messages`,
+        `${API_URL}/chats/${CHAT_ID}/messages`,
         {
           headers: {
             Authorization: `Bearer ${ACCESS_TOKEN}`,
@@ -141,7 +142,7 @@ export default function ChatPage() {
           const formData = new FormData();
           formData.append('file', e.target.files[0]);
 
-          const res = await fetch('http://localhost:3001/upload', {
+          const res = await fetch(`${API_URL}/upload`, {
             method: 'POST',
             body: formData,
           });

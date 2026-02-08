@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
 import { InviteModal } from '@/components/chat/InviteModal';
 import { InvitationType } from '@/types';
+import { API_URL } from '@/lib/constants';
 
 const FALLBACK_ICE_SERVERS: RTCConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -68,7 +69,7 @@ export default function CallPage() {
     socket.connect();
 
     // Fetch TURN servers from backend, fall back to STUN-only
-    fetch('http://localhost:3001/call/ice')
+    fetch(`${API_URL}/call/ice`)
       .then((res) => res.json())
       .then((iceServers) => {
         iceConfigRef.current = { iceServers };
