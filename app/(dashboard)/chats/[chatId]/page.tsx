@@ -56,7 +56,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden" role="main" aria-label="Chat conversation">
       {/* Header */}
       <ChatHeader chat={activeChat} />
 
@@ -64,10 +64,15 @@ export default function ChatPage() {
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-4 py-4 bg-[var(--background-primary)]"
+        role="log"
+        aria-label="Message history"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-relevant="additions"
       >
         {chatMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center">
+            <div className="text-center" role="status" aria-live="polite">
               <p className="text-[var(--text-muted)]">
                 No messages yet. Start the conversation!
               </p>
@@ -78,7 +83,7 @@ export default function ChatPage() {
             {chatMessages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} aria-hidden="true" />
           </>
         )}
       </div>
