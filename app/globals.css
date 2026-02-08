@@ -159,3 +159,35 @@ body {
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
 }
+
+/* Mobile Touch Targets */
+@media (hover: none) and (pointer: coarse) {
+  /* Ensure buttons are at least 44x44px on touch devices */
+  button, [role="button"], a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  :root {
+    --header-height: 56px; /* Slightly smaller header on mobile */
+    --sidebar-width: 100%; /* Full width sidebar on mobile */
+  }
+
+  body {
+    font-size: 16px; /* Prevent zooming on iOS when focusing inputs */
+  }
+}
+
+/* Smooth Transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

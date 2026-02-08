@@ -19,16 +19,16 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
   const onlineStatus = otherUser?.status === 'ONLINE';
 
   return (
-    <header className="h-[var(--header-height)] flex items-center justify-between px-4 border-b border-[var(--divider-color)] bg-[var(--background-primary)]">
-      <div className="flex items-center gap-3">
+    <header className="h-[var(--header-height)] flex items-center justify-between px-3 sm:px-4 border-b border-[var(--divider-color)] bg-[var(--background-primary)]">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {/* Mobile menu button */}
         {isMobile && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors lg:hidden"
+            className="p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors flex-shrink-0"
             aria-label="Open sidebar"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -40,31 +40,33 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
         )}
 
         {/* Chat Info */}
-        {chat.isGroup ? (
-          <div className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white font-semibold flex items-center justify-center text-sm">
-            {displayName.slice(0, 2).toUpperCase()}
-          </div>
-        ) : (
-          <UserAvatar user={otherUser} size="md" showStatus />
-        )}
-
-        <div>
-          <h2 className="font-semibold text-[var(--text-primary)]">
-            {displayName}
-          </h2>
-          {!chat.isGroup && (
-            <p className="text-xs text-[var(--text-muted)]">
-              {onlineStatus ? 'Online' : 'Offline'}
-            </p>
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          {chat.isGroup ? (
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[var(--accent-primary)] text-white font-semibold flex items-center justify-center text-sm flex-shrink-0">
+              {displayName.slice(0, 2).toUpperCase()}
+            </div>
+          ) : (
+            <UserAvatar user={otherUser} size="md" showStatus />
           )}
+
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold text-[var(--text-primary)] truncate text-sm sm:text-base">
+              {displayName}
+            </h2>
+            {!chat.isGroup && (
+              <p className="text-xs text-[var(--text-muted)] truncate">
+                {onlineStatus ? 'Online' : 'Offline'}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2">
-        {/* Video Call */}
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        {/* Video Call - hidden on small mobile */}
         <button
-          className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="hidden xs:flex p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors items-center justify-center"
           aria-label="Start video call"
           title="Video call"
         >
@@ -78,9 +80,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
           </svg>
         </button>
 
-        {/* Search in chat */}
+        {/* Search in chat - hidden on extra small mobile */}
         <button
-          className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="hidden sm:flex p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors items-center justify-center"
           aria-label="Search in chat"
           title="Search"
         >
@@ -96,7 +98,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
 
         {/* More options */}
         <button
-          className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="flex items-center justify-center p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           aria-label="More options"
           title="More"
         >
