@@ -124,7 +124,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
           </button>
         </div>
       )}
-      <div className="flex items-end gap-1.5 sm:gap-2">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* File upload button */}
         <button
           onClick={() => fileInputRef.current?.click()}
