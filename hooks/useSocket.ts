@@ -92,9 +92,10 @@ export const useSocket = () => {
       updateUserStatus({ userId: data.userId, status: data.status as any, lastSeen: null });
 
       // If it's the current user, update auth store
-      if (user && data.userId === user.id) {
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser && data.userId === currentUser.id) {
         useAuthStore.getState().setUser({
-          ...user,
+          ...currentUser,
           status: data.status as any,
         });
       }
