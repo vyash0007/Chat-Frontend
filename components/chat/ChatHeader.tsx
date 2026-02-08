@@ -16,7 +16,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
 
   if (!chat) return null;
 
-  const otherUser = chat.isGroup ? null : chat.users[0];
+  const otherUser = chat.isGroup ? null : chat.users?.[0];
   const displayName = chat.name || otherUser?.name || 'Unknown';
   const onlineStatus = otherUser?.status === 'ONLINE';
 

@@ -17,7 +17,7 @@ export const ChatList: React.FC = () => {
   }, [fetchChats]);
 
   const filteredChats = chats.filter(chat => {
-    const chatName = chat.name || chat.users[0]?.name || '';
+    const chatName = chat.name || chat.users?.[0]?.name || '';
     return chatName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 

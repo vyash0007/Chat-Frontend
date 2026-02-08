@@ -21,7 +21,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
   const router = useRouter();
   const { isMobile, setSidebarOpen } = useUIStore();
 
-  const otherUser = chat.isGroup ? null : chat.users[0];
+  const otherUser = chat.isGroup ? null : chat.users?.[0];
   const displayName = chat.name || otherUser?.name || 'Unknown';
   const lastMessageContent = chat.lastMessage?.content || 'No messages yet';
   const lastMessageTime = chat.lastMessage?.createdAt;
