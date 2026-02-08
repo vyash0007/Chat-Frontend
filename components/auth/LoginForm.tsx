@@ -6,19 +6,21 @@ import { PhoneInput } from './PhoneInput';
 import { OTPInput } from './OTPInput';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store';
+import { isValidPhoneNumber, formatPhoneNumberIntl } from 'libphonenumber-js';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
   const { login, verifyOtp, isLoading, error, clearError } = useAuthStore();
 
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState<string>(''); // E.164 format: +14155552671
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [localError, setLocalError] = useState('');
 
   const handleSendOtp = async () => {
-    if (phone.length < 10) {
-      setLocalError('Please enter a valid phone number');
+    // Validate phone number using libphonenumber-js
+    if (!phone || !isValidPhoneNumber(phone)) {
+      setLocalError('Please enter a valid phone number with country code');
       return;
     }
 
@@ -26,7 +28,7 @@ export const LoginForm: React.FC = () => {
     setLocalError('');
 
     try {
-      await login({ phone: `+1${phone}` });
+      await login({ phone }); // Send E.164 format directly
       setStep('otp');
     } catch (err) {
       setLocalError(error || 'Failed to send verification code');
@@ -43,7 +45,7 @@ export const LoginForm: React.FC = () => {
     setLocalError('');
 
     try {
-      await verifyOtp({ phone: `+1${phone}`, otp });
+      await verifyOtp({ phone, otp }); // Use E.164 format
 
       // Check if user needs to complete profile
       const { user } = useAuthStore.getState();
@@ -63,7 +65,7 @@ export const LoginForm: React.FC = () => {
     setOtp('');
 
     try {
-      await login({ phone: `+1${phone}` });
+      await login({ phone }); // Use E.164 format
     } catch (err) {
       setLocalError(error || 'Failed to resend code');
     }
@@ -76,6 +78,15 @@ export const LoginForm: React.FC = () => {
     setLocalError('');
   };
 
+  const handlePhoneChange = (value: string | undefined) => {
+    setPhone(value || '');
+    // Clear errors when user types
+    if (localError || error) {
+      clearError();
+      setLocalError('');
+    }
+  };
+
   return (
     <div className="w-full max-w-md space-y-8">
       {/* Header */}
@@ -86,7 +97,7 @@ export const LoginForm: React.FC = () => {
         <p className="mt-2 text-[var(--text-secondary)]">
           {step === 'phone'
             ? 'Enter your phone number to get started'
-            : `We sent a code to +1 ${phone}`}
+            : `We sent a code to ${formatPhoneNumberIntl(phone)}`}
         </p>
       </div>
 
@@ -96,7 +107,7 @@ export const LoginForm: React.FC = () => {
           <>
             <PhoneInput
               value={phone}
-              onChange={setPhone}
+              onChange={handlePhoneChange}
               onSubmit={handleSendOtp}
               disabled={isLoading}
               error={localError || error || undefined}
@@ -105,7 +116,7 @@ export const LoginForm: React.FC = () => {
             <Button
               onClick={handleSendOtp}
               isLoading={isLoading}
-              disabled={phone.length < 10}
+              disabled={!phone || isLoading}
               fullWidth
               size="lg"
             >

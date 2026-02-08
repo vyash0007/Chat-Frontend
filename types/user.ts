@@ -7,7 +7,7 @@ export enum UserStatus {
 
 export interface User {
   id: string;
-  phone: string | null;
+  phone: string | null; // E.164 format: +14155552671, +442071234567, +919876543210
   email: string | null;
   name: string | null;
   avatar: string | null;

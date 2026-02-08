@@ -216,3 +216,62 @@ body {
     font-size: max(16px, 1em);
   }
 }
+
+/* react-phone-number-input custom styles */
+.phone-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-input .PhoneInputCountry {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-input .PhoneInputCountry:hover {
+  background: var(--background-hover);
+}
+
+.phone-input .PhoneInputInput {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.phone-input .PhoneInputInput:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 1px var(--border-focus);
+}
+
+.phone-input .PhoneInputInput::placeholder {
+  color: var(--text-muted);
+}
+
+.phone-input-error .PhoneInputInput {
+  border-color: var(--danger);
+}
+
+.phone-input-error .PhoneInputInput:focus {
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .phone-input .PhoneInputCountryIcon {
+    filter: brightness(0.9);
+  }
+}

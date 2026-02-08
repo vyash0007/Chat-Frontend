@@ -1,12 +1,12 @@
 import { User } from './user';
 
 export interface LoginPayload {
-  phone: string;
+  phone: string; // E.164 format: +14155552671, +442071234567, +919876543210
 }
 
 export interface VerifyOTPPayload {
-  phone: string;
-  otp: string;
+  phone: string; // E.164 format: +14155552671, +442071234567, +919876543210
+  otp: string; // 6-digit code
 }
 
 export interface AuthResponse {
