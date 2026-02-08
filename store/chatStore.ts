@@ -257,13 +257,24 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       const token = getAuthToken();
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch(`${API_URL}/chats`, {
+      let url: string;
+      let body: Record<string, unknown>;
+
+      if (isGroup) {
+        url = `${API_URL}/chats/group`;
+        body = { userIds, name };
+      } else {
+        url = `${API_URL}/chats`;
+        body = { otherUserId: userIds[0] };
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userIds, name, isGroup }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
