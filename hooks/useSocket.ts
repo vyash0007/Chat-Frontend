@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import { useAuthStore, useChatStore, useUserStore } from '@/store';
 import { Message, TypingStatus, MessageStatus } from '@/types';
-
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
+import { getSocket } from '@/lib/socket';
 
 export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
@@ -16,82 +15,75 @@ export const useSocket = () => {
   useEffect(() => {
     if (!token) return;
 
-    // Create socket connection
-    const socket = io(WS_URL, {
-      auth: { token },
-      transports: ['websocket'],
-    });
-
+    // Use the shared socket instance from lib/socket
+    const socket = getSocket(token);
     socketRef.current = socket;
 
+    // Remove all existing listeners first to prevent duplicates
+    socket.removeAllListeners();
+
     // Connection events
-    socket.on('connect', () => {
+    const handleConnect = () => {
       console.log('✅ Socket connected');
-    });
+    };
 
-    socket.on('disconnect', () => {
+    const handleDisconnect = () => {
       console.log('❌ Socket disconnected');
-    });
+    };
 
-    socket.on('error', (error: any) => {
+    const handleError = (error: any) => {
       console.error('Socket error:', error);
-    });
+    };
 
     // Message events
-    socket.on('receiveMessage', (message: Message) => {
+    const handleReceiveMessage = (message: Message) => {
       console.log('📨 Received message:', message);
       addMessage(message);
-    });
+    };
 
-    socket.on('messageSent', (data: { tempId: string; message: Message }) => {
+    const handleMessageSent = (data: { tempId: string; message: Message }) => {
       console.log('✅ Message sent:', data);
-      // Update message from temp ID to real ID
       addMessage(data.message);
-    });
+    };
 
-    socket.on('messageRead', (data: { messageId: string; userId: string }) => {
+    const handleMessageRead = (data: { messageId: string; userId: string }) => {
       console.log('👁 Message read:', data);
       updateMessageStatus(data.messageId, MessageStatus.READ);
-    });
+    };
 
     // Typing events
-    socket.on('userTyping', (data: TypingStatus) => {
+    const handleUserTyping = (data: TypingStatus) => {
       console.log('⌨️ User typing:', data);
       addTypingUser(data);
 
-      // Auto-remove after 3 seconds
       setTimeout(() => {
         removeTypingUser(data.chatId, data.userId);
       }, 3000);
-    });
+    };
 
-    socket.on('userStoppedTyping', (data: { chatId: string; userId: string }) => {
+    const handleUserStoppedTyping = (data: { chatId: string; userId: string }) => {
       console.log('🛑 User stopped typing:', data);
       removeTypingUser(data.chatId, data.userId);
-    });
+    };
 
     // Status events
-    socket.on('onlineUsers', (users: { id: string; status: string; lastSeen: Date | null }[]) => {
+    const handleOnlineUsers = (users: { id: string; status: string; lastSeen: Date | null }[]) => {
       console.log('📋 Initial online users:', users);
-      // Initialize online users in store
       const onlineUserIds = users.map(u => u.id);
       useUserStore.getState().setOnlineUsers(onlineUserIds);
-    });
+    };
 
-    socket.on('userStatusChange', (data: { userId: string; status: string }) => {
+    const handleUserStatusChange = (data: { userId: string; status: string }) => {
       console.log('🟢 User status changed:', data);
 
-      // Update online users set
       if (data.status === 'ONLINE' || data.status === 'AWAY' || data.status === 'DO_NOT_DISTURB') {
         addOnlineUser(data.userId);
       } else {
         removeOnlineUser(data.userId);
       }
 
-      // Update user's cached status
       updateUserStatus({ userId: data.userId, status: data.status as any, lastSeen: null });
 
-      // If it's the current user, update auth store
       const currentUser = useAuthStore.getState().user;
       if (currentUser && data.userId === currentUser.id) {
         useAuthStore.getState().setUser({
@@ -99,11 +91,33 @@ export const useSocket = () => {
           status: data.status as any,
         });
       }
-    });
+    };
+
+    // Register all event listeners
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('error', handleError);
+    socket.on('receiveMessage', handleReceiveMessage);
+    socket.on('messageSent', handleMessageSent);
+    socket.on('messageRead', handleMessageRead);
+    socket.on('userTyping', handleUserTyping);
+    socket.on('userStoppedTyping', handleUserStoppedTyping);
+    socket.on('onlineUsers', handleOnlineUsers);
+    socket.on('userStatusChange', handleUserStatusChange);
 
     return () => {
-      console.log('🔌 Disconnecting socket');
-      socket.disconnect();
+      console.log('🧹 Cleaning up socket listeners');
+      // Clean up listeners on unmount
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('error', handleError);
+      socket.off('receiveMessage', handleReceiveMessage);
+      socket.off('messageSent', handleMessageSent);
+      socket.off('messageRead', handleMessageRead);
+      socket.off('userTyping', handleUserTyping);
+      socket.off('userStoppedTyping', handleUserStoppedTyping);
+      socket.off('onlineUsers', handleOnlineUsers);
+      socket.off('userStatusChange', handleUserStatusChange);
     };
   }, [token, addMessage, updateMessageStatus, addTypingUser, removeTypingUser, updateUserStatus, addOnlineUser, removeOnlineUser]);
 

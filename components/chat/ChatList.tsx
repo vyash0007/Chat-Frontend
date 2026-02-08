@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ChatListItem } from './ChatListItem';
-import { useChatStore, useUIStore } from '@/store';
+import { useChatStore, useUIStore, useAuthStore } from '@/store';
 import { Input } from '@/components/ui';
 
 export const ChatList: React.FC = () => {
   const { chatId } = useParams();
   const { chats, fetchChats, typingUsers } = useChatStore();
   const { openModal } = useUIStore();
+  const { user: currentUser } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -17,7 +18,11 @@ export const ChatList: React.FC = () => {
   }, [fetchChats]);
 
   const filteredChats = chats.filter(chat => {
-    const chatName = chat.name || chat.users?.[0]?.name || '';
+    // For 1-on-1 chats, find the OTHER user (not the current user)
+    const otherUser = chat.isGroup
+      ? null
+      : chat.users?.find(u => u.id !== currentUser?.id);
+    const chatName = chat.name || otherUser?.name || '';
     return chatName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 

@@ -3,3 +3,6 @@ export { ChatListItem } from './ChatListItem';
 export { ChatHeader } from './ChatHeader';
 export { MessageBubble } from './MessageBubble';
 export { MessageInput } from './MessageInput';
+export { InviteModal } from './InviteModal';
+export { NewChatModal } from './NewChatModal';
+export { NewGroupModal } from './NewGroupModal';

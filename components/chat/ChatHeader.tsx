@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/user';
 import { Chat, User } from '@/types';
-import { useUIStore } from '@/store';
+import { useUIStore, useAuthStore } from '@/store';
 import { InviteModal } from './InviteModal';
 
 interface ChatHeaderProps {
@@ -11,14 +12,23 @@ interface ChatHeaderProps {
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
+  const router = useRouter();
   const { isMobile, setSidebarOpen } = useUIStore();
+  const { user: currentUser } = useAuthStore();
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   if (!chat) return null;
 
-  const otherUser = chat.isGroup ? null : chat.users?.[0];
+  // For 1-on-1 chats, find the OTHER user (not the current user)
+  const otherUser = chat.isGroup
+    ? null
+    : chat.users?.find(u => u.id !== currentUser?.id);
   const displayName = chat.name || otherUser?.name || 'Unknown';
   const onlineStatus = otherUser?.status === 'ONLINE';
+
+  const handleVideoCall = () => {
+    router.push(`/call?chatId=${chat.id}`);
+  };
 
   return (
     <>
@@ -71,7 +81,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
           {chat.isGroup && (
             <button
               onClick={() => setShowInviteModal(true)}
-              className="hidden xs:flex p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors items-center justify-center"
+              className="flex p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors items-center justify-center"
               aria-label="Invite members"
               title="Invite to chat"
             >
@@ -86,9 +96,27 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
             </button>
           )}
 
-          {/* Video Call - hidden on small mobile */}
+          {/* Audio Call */}
           <button
-            className="hidden xs:flex p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors items-center justify-center"
+            onClick={() => router.push(`/call?chatId=${chat.id}&audio=true`)}
+            className="flex p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors items-center justify-center"
+            aria-label="Start audio call"
+            title="Audio call"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+              />
+            </svg>
+          </button>
+
+          {/* Video Call */}
+          <button
+            onClick={handleVideoCall}
+            className="flex p-2 sm:p-2.5 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors items-center justify-center"
             aria-label="Start video call"
             title="Video call"
           >

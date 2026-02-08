@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { Chat, Message, MessageType, MessageStatus, TypingStatus, SendMessagePayload } from '@/types';
+import { getSocket } from '@/lib/socket';
 
 interface ChatState {
   chats: Chat[];
@@ -135,7 +136,18 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       },
     }));
 
-    // Actual message will be received via WebSocket
+    // Send message via WebSocket
+    const token = getAuthToken();
+    const socket = getSocket(token || undefined);
+    if (socket && socket.connected) {
+      socket.emit('sendMessage', {
+        chatId: payload.chatId,
+        content: payload.content,
+        type: payload.type,
+      });
+    } else {
+      console.error('Socket not connected. Cannot send message.');
+    }
   },
 
   addMessage: (message: Message) => {

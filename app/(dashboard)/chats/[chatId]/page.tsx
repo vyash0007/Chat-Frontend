@@ -4,10 +4,12 @@ import React, { useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { ChatHeader, MessageBubble, MessageInput } from '@/components/chat';
 import { useChatStore } from '@/store';
+import { useSocket } from '@/hooks';
 
 export default function ChatPage() {
   const { chatId } = useParams();
   const { activeChat, messages, fetchMessages, setActiveChat } = useChatStore();
+  const { joinChat, leaveChat } = useSocket();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -17,8 +19,14 @@ export default function ChatPage() {
     if (chatId) {
       setActiveChat(chatId as string);
       fetchMessages(chatId as string);
+      joinChat(chatId as string);
+
+      return () => {
+        leaveChat(chatId as string);
+      };
     }
-  }, [chatId, setActiveChat, fetchMessages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

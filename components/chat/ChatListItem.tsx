@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/user';
 import { Chat } from '@/types';
 import { formatDate, truncate, cn } from '@/lib/utils';
-import { useUIStore } from '@/store';
+import { useUIStore, useAuthStore } from '@/store';
 
 interface ChatListItemProps {
   chat: Chat;
@@ -20,8 +20,12 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
 }) => {
   const router = useRouter();
   const { isMobile, setSidebarOpen } = useUIStore();
+  const { user: currentUser } = useAuthStore();
 
-  const otherUser = chat.isGroup ? null : chat.users?.[0];
+  // For 1-on-1 chats, find the OTHER user (not the current user)
+  const otherUser = chat.isGroup
+    ? null
+    : chat.users?.find(u => u.id !== currentUser?.id);
   const displayName = chat.name || otherUser?.name || 'Unknown';
   const lastMessageContent = chat.lastMessage?.content || 'No messages yet';
   const lastMessageTime = chat.lastMessage?.createdAt;

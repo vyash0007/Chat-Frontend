@@ -1,12 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ChatList } from '@/components/chat/ChatList';
 import { UserPanel } from './UserPanel';
 import { useUIStore } from '@/store';
+import { NewChatModal } from '@/components/chat/NewChatModal';
+import { NewGroupModal } from '@/components/chat/NewGroupModal';
 
 export const Sidebar: React.FC = () => {
   const { isMobile, setSidebarOpen } = useUIStore();
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [showNewGroupModal, setShowNewGroupModal] = useState(false);
 
   return (
     <div className="h-full flex flex-col">
@@ -16,22 +20,58 @@ export const Sidebar: React.FC = () => {
           Chats
         </h1>
 
-        {isMobile && (
+        <div className="flex items-center gap-2">
+          {/* New Chat Button */}
           <button
-            onClick={() => setSidebarOpen(false)}
+            onClick={() => setShowNewChatModal(true)}
             className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors"
-            aria-label="Close sidebar"
+            aria-label="New chat"
+            title="New chat"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
           </button>
-        )}
+
+          {/* New Group Button */}
+          <button
+            onClick={() => setShowNewGroupModal(true)}
+            className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors"
+            aria-label="New group"
+            title="New group"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          </button>
+
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-2 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors"
+              aria-label="Close sidebar"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Chat List */}
@@ -41,6 +81,16 @@ export const Sidebar: React.FC = () => {
 
       {/* User Panel */}
       <UserPanel />
+
+      {/* Modals */}
+      <NewChatModal
+        isOpen={showNewChatModal}
+        onClose={() => setShowNewChatModal(false)}
+      />
+      <NewGroupModal
+        isOpen={showNewGroupModal}
+        onClose={() => setShowNewGroupModal(false)}
+      />
     </div>
   );
 };
