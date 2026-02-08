@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { useAuthStore, useChatStore, useUserStore } from '@/store';
 import { Message, TypingStatus, MessageStatus } from '@/types';
-import { getSocket } from '@/lib/socket';
+import { getSocket, joinChat, leaveChat, emitTyping, emitStopTyping, disconnectSocket } from '@/lib/socket';
 
 // This hook should only be called ONCE in the layout component.
 // For joinChat/leaveChat/emitTyping, import directly from '@/lib/socket'.
@@ -89,4 +89,17 @@ export const useSocket = () => {
     // No cleanup - this hook runs once for the lifetime of the app
     // Socket disconnection happens on logout via disconnectSocket()
   }, [token]);
+
+  // Return a stable api for components to use. These functions delegate to the
+  // singleton socket instance in `lib/socket` so they can be called anywhere.
+  const socket = getSocket(token) || null;
+
+  return {
+    socket,
+    joinChat,
+    leaveChat,
+    emitTyping,
+    emitStopTyping,
+    disconnectSocket,
+  } as const;
 };
