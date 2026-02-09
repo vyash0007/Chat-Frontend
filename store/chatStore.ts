@@ -215,7 +215,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           type: payload.type,
         });
       } else {
-        console.error('[Chat] Socket still not connected. Message may be delayed.');
+        console.log('[Chat] Socket connecting, message queued for send.');
         // Socket will emit when connected, so we'll queue it
         socket.once('connect', () => {
           socket.emit('sendMessage', {
