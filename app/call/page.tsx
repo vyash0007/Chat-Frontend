@@ -490,12 +490,12 @@ function CallContent() {
       )}
 
       {/* Main Video Grid */}
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-4 overflow-hidden flex items-center justify-center">
         {isScreenSharing ? (
-          /* Screen Sharing Layout - Presenter View */
-          <div className="h-full flex gap-4">
+          /* Screen Sharing Layout */
+          <div className="w-full h-full flex gap-4 max-h-[calc(100vh-220px)]">
             {/* Main Screen Share View */}
-            <div className="flex-1 relative rounded-3xl overflow-hidden bg-black border border-white/10">
+            <div className="flex-1 relative rounded-2xl overflow-hidden bg-black border border-white/20">
               <video
                 ref={screenVideoRef}
                 autoPlay
@@ -504,20 +504,18 @@ function CallContent() {
                 className="w-full h-full object-contain"
               />
               {/* Screen Share Badge */}
-              <div className="absolute top-4 left-4 flex items-center gap-2">
-                <div className="px-4 py-2 bg-green-500/80 backdrop-blur-md rounded-xl border border-green-400/30 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-white text-sm font-medium">You are sharing</span>
+              <div className="absolute top-3 left-3">
+                <div className="px-3 py-1.5 bg-green-500/90 rounded-lg flex items-center gap-2 shadow-lg">
+                  <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  <span className="text-white text-xs font-medium">Sharing Screen</span>
                 </div>
               </div>
             </div>
 
-            {/* Participant Thumbnails Sidebar */}
-            <div className="w-52 flex flex-col gap-3 overflow-y-auto">
-              {/* Your camera (self-view while sharing) */}
-              <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-emerald-500/30 aspect-video">
+            {/* Participant Sidebar */}
+            <div className="w-44 flex flex-col gap-2 overflow-y-auto">
+              {/* Self-view */}
+              <div className="relative rounded-xl overflow-hidden bg-slate-800 border border-emerald-500/40 aspect-video flex-shrink-0">
                 <video
                   ref={localVideo}
                   autoPlay
@@ -525,16 +523,14 @@ function CallContent() {
                   playsInline
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-2 left-2">
-                  <div className="px-2 py-1 bg-emerald-500/70 backdrop-blur-sm rounded-lg">
-                    <span className="text-white text-xs font-medium">You (camera)</span>
-                  </div>
+                <div className="absolute bottom-1.5 left-1.5">
+                  <span className="px-1.5 py-0.5 bg-emerald-500/80 text-white text-[10px] font-medium rounded">You</span>
                 </div>
               </div>
 
               {/* Remote participants */}
               {Object.entries(remoteStreams).map(([userId, stream]) => (
-                <div key={userId} className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 aspect-video">
+                <div key={userId} className="relative rounded-xl overflow-hidden bg-slate-800 border border-white/10 aspect-video flex-shrink-0">
                   <video
                     autoPlay
                     playsInline
@@ -543,106 +539,120 @@ function CallContent() {
                       if (el) el.srcObject = stream;
                     }}
                   />
-                  <div className="absolute bottom-2 left-2">
-                    <div className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg">
-                      <span className="text-white text-xs">{userId.slice(0, 6)}...</span>
-                    </div>
+                  <div className="absolute bottom-1.5 left-1.5">
+                    <span className="px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded">{userId.slice(0, 6)}</span>
                   </div>
                 </div>
               ))}
-
-              {remoteCount === 0 && (
-                <div className="flex items-center justify-center aspect-video rounded-2xl bg-white/5 border border-white/10">
-                  <p className="text-white/40 text-xs text-center px-2">Waiting for participants...</p>
-                </div>
-              )}
             </div>
           </div>
         ) : (
           /* Normal Video Grid Layout */
-          <div className={`grid gap-4 h-full ${remoteCount === 0 ? 'grid-cols-1' :
-            remoteCount === 1 ? 'grid-cols-1 lg:grid-cols-2' :
-              'grid-cols-2 lg:grid-cols-3'
-            }`}>
-            {/* Local Video */}
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 min-h-[300px] group">
-              {isAudioOnly || isCameraOff ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600/20 to-purple-600/20">
-                  <div className="relative">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 blur-xl opacity-50" />
-                    <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl">
-                      <span className="text-4xl text-white font-bold">
-                        {user?.name?.charAt(0)?.toUpperCase() || 'Y'}
-                      </span>
+          <div className="w-full max-w-5xl">
+            {remoteCount === 0 ? (
+              /* Solo view - waiting for others */
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
+                {/* Local Video - Centered */}
+                <div className="relative w-full max-w-md aspect-video rounded-2xl overflow-hidden bg-slate-800 border border-white/10">
+                  {isAudioOnly || isCameraOff ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600/30 to-purple-600/30">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
+                        <span className="text-3xl text-white font-bold">
+                          {user?.name?.charAt(0)?.toUpperCase() || 'Y'}
+                        </span>
+                      </div>
+                      {isCameraOff && !isAudioOnly && (
+                        <p className="mt-3 text-white/50 text-sm">Camera off</p>
+                      )}
                     </div>
-                  </div>
-                  {isCameraOff && !isAudioOnly && (
-                    <p className="mt-4 text-white/50 text-sm">Camera off</p>
+                  ) : (
+                    <video
+                      ref={localVideo}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
                   )}
-                </div>
-              ) : (
-                <video
-                  ref={localVideo}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-              )}
-
-              {/* Label */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10">
-                  <span className="text-white text-sm font-medium">You</span>
-                </div>
-                {isMuted && (
-                  <div className="p-2 bg-red-500/80 backdrop-blur-sm rounded-xl">
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Remote Videos */}
-            {Object.entries(remoteStreams).map(([userId, stream]) => (
-              <div key={userId} className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 min-h-[300px]">
-                <video
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-cover"
-                  ref={(el) => {
-                    if (el) el.srcObject = stream;
-                  }}
-                />
-                <div className="absolute bottom-4 left-4">
-                  <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10">
-                    <span className="text-white text-sm font-medium">User {userId.slice(0, 6)}...</span>
+                  <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                    <span className="px-2 py-1 bg-black/50 text-white text-xs font-medium rounded-lg">You</span>
+                    {isMuted && (
+                      <span className="p-1.5 bg-red-500/80 rounded-lg">
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                        </svg>
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
 
-            {/* Waiting State */}
-            {remoteCount === 0 && (
-              <div className="flex items-center justify-center">
-                <div className="text-center">
-                  <div className="relative w-24 h-24 mx-auto mb-6">
+                {/* Waiting indicator */}
+                <div className="flex flex-col items-center gap-3 p-6">
+                  <div className="relative w-16 h-16">
                     <div className="absolute inset-0 rounded-full bg-purple-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                    <div className="absolute inset-2 rounded-full bg-purple-500/30 animate-ping" style={{ animationDuration: '2.5s' }} />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/20 backdrop-blur-sm border border-white/10 flex items-center justify-center">
-                        <svg className="w-10 h-10 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                       </div>
                     </div>
                   </div>
-                  <p className="text-white/60 text-lg font-medium">Waiting for others to join...</p>
-                  <p className="text-white/40 text-sm mt-2">Share this call to invite participants</p>
+                  <p className="text-white/60 text-sm font-medium">Waiting for others...</p>
                 </div>
+              </div>
+            ) : (
+              /* Two+ people - Grid view */
+              <div className={`grid gap-3 ${remoteCount === 1 ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-3'}`}>
+                {/* Local Video */}
+                <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-800 border border-white/10">
+                  {isAudioOnly || isCameraOff ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600/30 to-purple-600/30">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <span className="text-2xl text-white font-bold">
+                          {user?.name?.charAt(0)?.toUpperCase() || 'Y'}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <video
+                      ref={localVideo}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 bg-black/50 text-white text-xs font-medium rounded">You</span>
+                    {isMuted && (
+                      <span className="p-1 bg-red-500/80 rounded">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Remote Videos */}
+                {Object.entries(remoteStreams).map(([userId, stream]) => (
+                  <div key={userId} className="relative aspect-video rounded-xl overflow-hidden bg-slate-800 border border-white/10">
+                    <video
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                      ref={(el) => {
+                        if (el) el.srcObject = stream;
+                      }}
+                    />
+                    <div className="absolute bottom-2 left-2">
+                      <span className="px-2 py-0.5 bg-black/50 text-white text-xs rounded">{userId.slice(0, 8)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
