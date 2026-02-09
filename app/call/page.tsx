@@ -76,6 +76,7 @@ function CallContent() {
   const iceConfigRef = useRef<RTCConfiguration>(FALLBACK_ICE_SERVERS);
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
   const offerProcessingRef = useRef<Set<string>>(new Set());
+  const makingOfferRef = useRef<Record<string, boolean>>({});
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -118,19 +119,57 @@ function CallContent() {
       if (!socket) return null;
       if (peersRef.current[targetUserId]) return peersRef.current[targetUserId];
 
+      console.log('[Call] Creating PeerConnection with:', targetUserId);
       const pc = new RTCPeerConnection(iceConfigRef.current);
       peersRef.current[targetUserId] = pc;
 
+      // Ensure stable m-line order: Audio first, Video second
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+      pc.addTransceiver('video', { direction: 'sendrecv' });
+
+      // Add existing tracks to the transceivers
       const stream = localStreamRef.current;
       if (stream) {
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        stream.getTracks().forEach((track) => {
+          const kind = track.kind;
+          const transceiver = pc.getTransceivers().find(t => t.receiver.track.kind === kind);
+          if (transceiver && transceiver.sender) {
+            transceiver.sender.replaceTrack(track);
+          }
+        });
       }
 
+      pc.onnegotiationneeded = async () => {
+        try {
+          if (makingOfferRef.current[targetUserId]) return;
+          makingOfferRef.current[targetUserId] = true;
+
+          console.log('[Call] Negotiation needed for:', targetUserId);
+          const offer = await pc.createOffer();
+          if (pc.signalingState !== 'stable') return;
+
+          await pc.setLocalDescription(offer);
+          socket.emit('offer', { chatId, targetUserId, offer });
+        } catch (err) {
+          console.error('[Call] Error during negotiation:', err);
+        } finally {
+          makingOfferRef.current[targetUserId] = false;
+        }
+      };
+
       pc.ontrack = (event) => {
-        setRemoteStreams((prev) => ({
-          ...prev,
-          [targetUserId]: event.streams[0],
-        }));
+        console.log('[Call] Received remote track:', event.track.kind, 'from:', targetUserId);
+        setRemoteStreams((prev) => {
+          const existingStream = prev[targetUserId] || new MediaStream();
+          if (!existingStream.getTracks().some(t => t.id === event.track.id)) {
+            existingStream.addTrack(event.track);
+          }
+          // Create a new MediaStream instance to trigger React reactivity
+          return {
+            ...prev,
+            [targetUserId]: new MediaStream(existingStream.getTracks()),
+          };
+        });
         setIsConnecting(false);
       };
 
@@ -142,6 +181,10 @@ function CallContent() {
             candidate: event.candidate,
           });
         }
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log(`[Call] Connection state with ${targetUserId}: ${pc.connectionState}`);
       };
 
       return pc;
@@ -168,7 +211,12 @@ function CallContent() {
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(t => t.stop());
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -211,20 +259,15 @@ function CallContent() {
       });
 
     socket.on('existingParticipants', async (userIds: string[]) => {
+      console.log('[Call] Existing participants:', userIds);
       for (const userId of userIds) {
-        const pc = createPeerConnection(userId);
-        if (!pc) continue;
-        try {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          socket.emit('offer', { chatId, targetUserId: userId, offer });
-        } catch (err) {
-          console.error('[Call] Error creating offer:', err);
-        }
+        // Just creating the PC will trigger onnegotiationneeded because of the transceivers
+        createPeerConnection(userId);
       }
     });
 
     socket.on('userJoinedCall', async (userId: string) => {
+      console.log('[Call] User joined:', userId);
       createPeerConnection(userId);
     });
 
@@ -401,11 +444,11 @@ function CallContent() {
       // Restore original video track
       if (originalVideoTrackRef.current) {
         for (const pc of Object.values(peersRef.current)) {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video' || !s.track);
-          if (sender) {
+          const videoTransceiver = pc.getTransceivers().find(t => t.receiver.track.kind === 'video');
+          if (videoTransceiver && videoTransceiver.sender) {
             try {
-              await sender.replaceTrack(originalVideoTrackRef.current);
-              console.log('[Call] Restored camera track in peer connection');
+              await videoTransceiver.sender.replaceTrack(originalVideoTrackRef.current);
+              console.log('[Call] Restored camera track in video transceiver');
             } catch (err) {
               console.error('[Call] Error restoring camera track:', err);
             }
@@ -416,7 +459,6 @@ function CallContent() {
           const stream = localStreamRef.current;
           stream.getVideoTracks().forEach(t => stream.removeTrack(t));
           stream.addTrack(originalVideoTrackRef.current);
-          // Trigger re-render to re-bind VideoStream with updated tracks
           setLocalStream(new MediaStream(stream.getTracks()));
         }
       }
@@ -452,19 +494,18 @@ function CallContent() {
           }
         }
 
-        // Replace video track in all peer connections
+        // Replace video track in all peer connections via transceivers
         for (const [userId, pc] of Object.entries(peersRef.current)) {
-          const senders = pc.getSenders();
-          const videoSender = senders.find(s => s.track?.kind === 'video');
-          if (videoSender) {
+          const videoTransceiver = pc.getTransceivers().find(t => t.receiver.track.kind === 'video');
+          if (videoTransceiver && videoTransceiver.sender) {
             try {
-              await videoSender.replaceTrack(screenTrack);
-              console.log('[Call] Replaced video track for peer:', userId);
+              await videoTransceiver.sender.replaceTrack(screenTrack);
+              console.log('[Call] Replaced video track with screen track for:', userId);
             } catch (err) {
               console.error('[Call] Error replacing track for peer:', userId, err);
             }
           } else {
-            console.warn('[Call] No video sender found for peer:', userId);
+            console.warn('[Call] No video transceiver found for peer:', userId);
           }
         }
 
