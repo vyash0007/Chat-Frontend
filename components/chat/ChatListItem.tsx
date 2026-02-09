@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/user';
 import { Chat } from '@/types';
 import { formatDate, truncate, cn } from '@/lib/utils';
-import { useUIStore, useAuthStore } from '@/store';
-import { Pin, CheckCheck, Check } from 'lucide-react';
+import { useUIStore, useAuthStore, useChatStore } from '@/store';
+import { Pin, CheckCheck, Check, Archive } from 'lucide-react';
 
 interface ChatListItemProps {
   chat: Chat;
@@ -24,6 +24,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
   const router = useRouter();
   const { isMobile, setSidebarOpen } = useUIStore();
   const { user: currentUser } = useAuthStore();
+  const { archiveChat } = useChatStore();
 
   // For 1-on-1 chats, find the OTHER user (not the current user)
   const otherUser = chat.isGroup
@@ -55,10 +56,18 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
   };
 
   return (
-    <button
+    <div
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+      tabIndex={0}
+      role="button"
       className={cn(
-        'flex items-center p-2 mb-1 rounded-md cursor-pointer transition-all w-full text-left group',
+        'flex items-center p-2 mb-1 rounded-md cursor-pointer transition-all w-full text-left group outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-primary)]',
         isActive ? 'bg-[var(--accent-primary)]/10' : 'hover:bg-[var(--background-hover)]'
       )}
     >
@@ -110,9 +119,20 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
             {!hasUnread && chat.lastMessage && chat.lastMessage.senderId === currentUser?.id && (
               <CheckCheck size={14} className="text-[#a78bfa]" />
             )}
+            {/* Archive Button - Hover Only */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                archiveChat(chat.id);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--accent-primary)]/10 rounded-sm transition-all text-[var(--text-muted)] hover:text-[var(--accent-primary)]"
+              title={chat.isArchived ? "Unarchive chat" : "Archive chat"}
+            >
+              <Archive size={14} />
+            </button>
           </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 };

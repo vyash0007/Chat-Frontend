@@ -19,10 +19,16 @@ export const ChatList: React.FC = () => {
   }, [fetchChats]);
 
   const filteredChats = chats.filter(chat => {
+    // Archive Filtering
+    if (activeCategory === 'archive') {
+      if (!chat.isArchived) return false;
+    } else {
+      if (chat.isArchived) return false;
+    }
+
     // Category Filtering
     if (activeCategory === 'friends' && chat.isGroup) return false;
-    if (activeCategory === 'work' && !chat.isGroup) return false; // Simple heuristic for now: Group = Work
-    // archive and news can be added later if metadata exists
+    if (activeCategory === 'work' && !chat.isGroup) return false;
 
     // Search Filtering
     const otherUser = chat.isGroup

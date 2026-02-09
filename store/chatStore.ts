@@ -24,6 +24,7 @@ interface ChatState {
   addReaction: (messageId: string, emoji: string) => void;
   removeReaction: (messageId: string, emoji: string) => void;
   createChat: (userIds: string[], name?: string, isGroup?: boolean) => Promise<Chat>;
+  archiveChat: (chatId: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -395,6 +396,40 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       return newChat;
     } catch (error) {
       throw error;
+    }
+  },
+  archiveChat: async (chatId: string) => {
+    // Optimistic update
+    set(state => ({
+      chats: state.chats.map(chat =>
+        chat.id === chatId
+          ? { ...chat, isArchived: !chat.isArchived }
+          : chat
+      )
+    }));
+
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${API_URL}/chats/${chatId}/archive`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to archive chat');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      set(state => ({
+        chats: state.chats.map(chat =>
+          chat.id === chatId
+            ? { ...chat, isArchived: !chat.isArchived }
+            : chat
+        )
+      }));
+      console.error('Failed to archive chat:', error);
     }
   },
 

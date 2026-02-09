@@ -12,6 +12,7 @@ export interface Chat {
   unreadCount: number;
   pinnedMessageId: string | null;
   settings: ChatSettings | null;
+  isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

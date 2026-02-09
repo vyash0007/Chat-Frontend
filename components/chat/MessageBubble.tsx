@@ -150,7 +150,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         <div
           className={cn(
             'relative transition-all duration-200 shadow-sm overflow-hidden',
-            (message.type === MessageType.IMAGE || message.type === MessageType.VIDEO) ? 'p-0' : 'px-3.5 py-2',
+            (message.type === MessageType.IMAGE || message.type === MessageType.VIDEO) ? 'p-0' : (message.type === MessageType.FILE ? 'p-1' : 'px-3.5 py-2'),
             isSent
               ? 'bg-gradient-to-br from-[#a78bfa] to-[#8b5cf6] text-white rounded-md rounded-br-md'
               : 'bg-[var(--message-received-bg)] text-[var(--message-received-text)] rounded-md rounded-bl-md'
