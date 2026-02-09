@@ -60,6 +60,7 @@ function CallContent() {
   const [isConnecting, setIsConnecting] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [remoteScreenShareUserId, setRemoteScreenShareUserId] = useState<string | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const originalVideoTrackRef = useRef<MediaStreamTrack | null>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
@@ -289,6 +290,23 @@ function CallContent() {
         delete next[userId];
         return next;
       });
+      // Clear remote screen share if that user was sharing
+      if (remoteScreenShareUserId === userId) {
+        setRemoteScreenShareUserId(null);
+      }
+    });
+
+    // Screen share notifications
+    socket.on('screenShareStarted', ({ userId }: { userId: string }) => {
+      console.log('[Call] Remote user started screen sharing:', userId);
+      setRemoteScreenShareUserId(userId);
+    });
+
+    socket.on('screenShareStopped', ({ userId }: { userId: string }) => {
+      console.log('[Call] Remote user stopped screen sharing:', userId);
+      if (remoteScreenShareUserId === userId) {
+        setRemoteScreenShareUserId(null);
+      }
     });
 
     return () => {
@@ -378,6 +396,10 @@ function CallContent() {
       }
 
       setIsScreenSharing(false);
+      // Notify others that screen sharing stopped
+      if (socket) {
+        socket.emit('screenShareStopped', { chatId });
+      }
       console.log('[Call] Screen sharing stopped');
     } else {
       // Start screen sharing
@@ -428,6 +450,10 @@ function CallContent() {
 
         // Set state first - the useEffect will update the video element
         setIsScreenSharing(true);
+        // Notify others that screen sharing started
+        if (socket) {
+          socket.emit('screenShareStarted', { chatId });
+        }
         console.log('[Call] Screen sharing started');
       } catch (err: any) {
         console.error('[Call] Screen share error:', err);
@@ -542,11 +568,71 @@ function CallContent() {
 
       {/* Main Video Grid */}
       <main className="flex-1 p-4 overflow-hidden flex items-center justify-center">
-        {isScreenSharing ? (
-          /* Screen Sharing Layout */
-          <div className="w-full h-full flex gap-4 max-h-[calc(100vh-220px)]">
-            {/* Main Screen Share View */}
-            <div className="flex-1 relative rounded-2xl overflow-hidden bg-black border border-white/20">
+        {remoteScreenShareUserId && remoteStreams[remoteScreenShareUserId] ? (
+          /* Remote Screen Share Layout - Show remote screen share in fullscreen */
+          <div className="w-full h-full flex flex-col lg:flex-row gap-2 lg:gap-4">
+            {/* Main Screen Share View - Takes full height on mobile */}
+            <div className="flex-1 relative rounded-xl lg:rounded-2xl overflow-hidden bg-black border border-white/20 min-h-[60vh] lg:min-h-0">
+              <video
+                autoPlay
+                playsInline
+                className="w-full h-full object-contain"
+                ref={(el) => {
+                  if (el && remoteStreams[remoteScreenShareUserId]) {
+                    el.srcObject = remoteStreams[remoteScreenShareUserId];
+                  }
+                }}
+              />
+              {/* Screen Share Badge */}
+              <div className="absolute top-2 left-2 lg:top-3 lg:left-3">
+                <div className="px-2 py-1 lg:px-3 lg:py-1.5 bg-blue-500/90 rounded-lg flex items-center gap-1.5 lg:gap-2 shadow-lg">
+                  <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-white animate-pulse" />
+                  <span className="text-white text-[10px] lg:text-xs font-medium">{getDisplayName(remoteScreenShareUserId)} is sharing</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Participant Thumbnails - Horizontal scroll on mobile, vertical sidebar on desktop */}
+            <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden lg:w-44 pb-2 lg:pb-0">
+              {/* Self-view */}
+              <div className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-emerald-500/40 aspect-video flex-shrink-0 w-28 lg:w-full">
+                <video
+                  ref={localVideo}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
+                  <span className="px-1 py-0.5 lg:px-1.5 bg-emerald-500/80 text-white text-[8px] lg:text-[10px] font-medium rounded">You</span>
+                </div>
+              </div>
+
+              {/* Other remote participants (excluding the screen sharer - they're shown in main view) */}
+              {Object.entries(remoteStreams)
+                .filter(([userId]) => userId !== remoteScreenShareUserId)
+                .map(([userId, stream]) => (
+                  <div key={userId} className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-white/10 aspect-video flex-shrink-0 w-28 lg:w-full">
+                    <video
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                      ref={(el) => {
+                        if (el) el.srcObject = stream;
+                      }}
+                    />
+                    <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
+                      <span className="px-1 py-0.5 lg:px-1.5 bg-black/60 text-white text-[8px] lg:text-[10px] rounded">{getDisplayName(userId)}</span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        ) : isScreenSharing ? (
+          /* Local Screen Sharing Layout - Fullscreen on mobile */
+          <div className="w-full h-full flex flex-col lg:flex-row gap-2 lg:gap-4">
+            {/* Main Screen Share View - Takes full height on mobile */}
+            <div className="flex-1 relative rounded-xl lg:rounded-2xl overflow-hidden bg-black border border-white/20 min-h-[60vh] lg:min-h-0">
               <video
                 ref={screenVideoRef}
                 autoPlay
@@ -555,18 +641,18 @@ function CallContent() {
                 className="w-full h-full object-contain"
               />
               {/* Screen Share Badge */}
-              <div className="absolute top-3 left-3">
-                <div className="px-3 py-1.5 bg-green-500/90 rounded-lg flex items-center gap-2 shadow-lg">
-                  <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                  <span className="text-white text-xs font-medium">Sharing Screen</span>
+              <div className="absolute top-2 left-2 lg:top-3 lg:left-3">
+                <div className="px-2 py-1 lg:px-3 lg:py-1.5 bg-green-500/90 rounded-lg flex items-center gap-1.5 lg:gap-2 shadow-lg">
+                  <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-white animate-pulse" />
+                  <span className="text-white text-[10px] lg:text-xs font-medium">Sharing Screen</span>
                 </div>
               </div>
             </div>
 
-            {/* Participant Sidebar */}
-            <div className="w-44 flex flex-col gap-2 overflow-y-auto">
+            {/* Participant Thumbnails - Horizontal scroll on mobile, vertical sidebar on desktop */}
+            <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden lg:w-44 pb-2 lg:pb-0">
               {/* Self-view */}
-              <div className="relative rounded-xl overflow-hidden bg-slate-800 border border-emerald-500/40 aspect-video flex-shrink-0">
+              <div className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-emerald-500/40 aspect-video flex-shrink-0 w-28 lg:w-full">
                 <video
                   ref={localVideo}
                   autoPlay
@@ -574,14 +660,14 @@ function CallContent() {
                   playsInline
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-1.5 left-1.5">
-                  <span className="px-1.5 py-0.5 bg-emerald-500/80 text-white text-[10px] font-medium rounded">You</span>
+                <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
+                  <span className="px-1 py-0.5 lg:px-1.5 bg-emerald-500/80 text-white text-[8px] lg:text-[10px] font-medium rounded">You</span>
                 </div>
               </div>
 
               {/* Remote participants */}
               {Object.entries(remoteStreams).map(([userId, stream]) => (
-                <div key={userId} className="relative rounded-xl overflow-hidden bg-slate-800 border border-white/10 aspect-video flex-shrink-0">
+                <div key={userId} className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-white/10 aspect-video flex-shrink-0 w-28 lg:w-full">
                   <video
                     autoPlay
                     playsInline
@@ -590,8 +676,8 @@ function CallContent() {
                       if (el) el.srcObject = stream;
                     }}
                   />
-                  <div className="absolute bottom-1.5 left-1.5">
-                    <span className="px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded">{getDisplayName(userId)}</span>
+                  <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
+                    <span className="px-1 py-0.5 lg:px-1.5 bg-black/60 text-white text-[8px] lg:text-[10px] rounded">{getDisplayName(userId)}</span>
                   </div>
                 </div>
               ))}
