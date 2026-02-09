@@ -2,11 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { Sidebar, PrimarySidebar } from '@/components/layout';
 import { SearchUsersModal } from '@/components/chat/SearchUsersModal';
+import { NewChatModal } from '@/components/chat/NewChatModal';
+import { NewGroupModal } from '@/components/chat/NewGroupModal';
 import { IncomingCallModal, OutgoingCallModal } from '@/components/call';
 import { useAuthStore, useUIStore } from '@/store';
 import { useSocket } from '@/hooks';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
@@ -15,7 +18,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
-  const { sidebarOpen, isMobile, setIsMobile } = useUIStore();
+  const { sidebarOpen, isMobile, setIsMobile, currentModal, closeModal } = useUIStore();
   const [mounted, setMounted] = useState(false);
 
   // Wait for client-side mount (Zustand hydrates from localStorage on mount)
@@ -52,45 +55,63 @@ export default function DashboardLayout({
 
   if (!mounted || !isAuthenticated) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[var(--background-primary)]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--accent-primary)]"></div>
+      <div className="flex items-center justify-center h-screen bg-[#f5f3ff]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500"></div>
       </div>
     );
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--background-primary)]">
-      {/* Mobile backdrop */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[var(--z-fixed)]"
-          onClick={() => useUIStore.getState().setSidebarOpen(false)}
-        />
-      )}
+      {/* 1. Primary Sidebar (Slim Icon Bar - Dark) */}
+      <div className="w-[90px] bg-[#1e1f25] flex flex-col items-center py-8 shrink-0">
+        <PrimarySidebar />
+      </div>
 
-      {/* Sidebar */}
+      {/* 2. Secondary Sidebar (Chat List) - White */}
       <aside
-        className={`
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${isMobile ? 'fixed inset-y-0 left-0 z-[var(--z-modal-backdrop)]' : 'relative'}
-          w-[var(--sidebar-width)] bg-[var(--background-secondary)] border-r border-[var(--divider-color)]
-          transition-transform duration-300 ease-in-out
-        `}
+        className={cn(
+          "w-80 bg-[var(--background-secondary)] border-r border-[var(--border-color)] flex-shrink-0 transition-all duration-300",
+          isMobile && !sidebarOpen && "hidden"
+        )}
       >
         <Sidebar />
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      {/* 3. Main Content Area - White */}
+      <main className="flex-1 bg-[var(--background-secondary)] overflow-hidden flex transition-all duration-300 relative">
         {children}
       </main>
 
-      {/* Modals */}
+      {/* Modals - Centralized at Root */}
       <SearchUsersModal />
-
-      {/* Call Modals - Rendered globally */}
+      <NewChatModal
+        isOpen={currentModal === 'createChat'}
+        onClose={closeModal}
+      />
+      <NewGroupModal
+        isOpen={currentModal === 'createGroup'}
+        onClose={closeModal}
+      />
       <IncomingCallModal />
       <OutgoingCallModal />
+      {/* Custom Scrollbar Styles */}
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 5px;
+          height: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: var(--border-color);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: var(--text-muted);
+        }
+      `}</style>
     </div>
   );
 }

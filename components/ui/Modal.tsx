@@ -61,15 +61,15 @@ export const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#0a0a0c]/80 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Container */}
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center p-6 lg:p-12">
         <div
           className={cn(
-            'relative w-full rounded-xl bg-[var(--background-modal)] shadow-[var(--shadow-xl)] transform transition-all z-[var(--z-modal)]',
+            'relative w-full rounded-md bg-[var(--background-modal)] border border-[var(--glass-border)] shadow-2xl transform transition-all z-[var(--z-modal)]',
             sizeClasses[size]
           )}
           onClick={(e) => e.stopPropagation()}
@@ -79,13 +79,13 @@ export const Modal: React.FC<ModalProps> = ({
             <div className="flex items-center justify-between border-b border-[var(--divider-color)] px-6 py-4">
               <h3
                 id="modal-title"
-                className="text-lg font-semibold text-[var(--text-primary)]"
+                className="text-lg font-light tracking-tight text-[var(--text-primary)]"
               >
                 {title}
               </h3>
               <button
                 onClick={onClose}
-                className="rounded-lg p-1 text-[var(--text-muted)] hover:bg-[var(--background-hover)] hover:text-[var(--text-primary)] transition-colors"
+                className="rounded-sm p-1 text-[var(--text-muted)] hover:bg-[var(--background-hover)] hover:text-[var(--text-primary)] transition-colors"
                 aria-label="Close modal"
               >
                 <svg

@@ -71,24 +71,22 @@ export const SearchUsersModal: React.FC = () => {
     >
       <div className="space-y-4">
         {/* Search Mode Toggle */}
-        <div className="flex rounded-lg border border-[var(--divider-color)] overflow-hidden">
+        <div className="flex rounded-md border border-[var(--divider-color)] overflow-hidden">
           <button
             onClick={() => { setSearchMode('phone'); setSearchResults([]); setSearchQuery(''); }}
-            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-              searchMode === 'phone'
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${searchMode === 'phone'
                 ? 'bg-[var(--accent-primary)] text-white'
                 : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
+              }`}
           >
             Phone Number
           </button>
           <button
             onClick={() => { setSearchMode('email'); setSearchResults([]); setSearchQuery(''); }}
-            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-              searchMode === 'email'
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${searchMode === 'email'
                 ? 'bg-[var(--accent-primary)] text-white'
                 : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
+              }`}
           >
             Email
           </button>
@@ -146,7 +144,7 @@ export const SearchUsersModal: React.FC = () => {
               {searchResults.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-[var(--divider-color)] hover:bg-[var(--background-hover)] transition-colors"
+                  className="flex items-center justify-between p-3 rounded-md border border-[var(--divider-color)] hover:bg-[var(--background-hover)] transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     {/* Avatar */}

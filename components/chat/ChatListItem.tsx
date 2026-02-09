@@ -6,17 +6,20 @@ import { UserAvatar } from '@/components/user';
 import { Chat } from '@/types';
 import { formatDate, truncate, cn } from '@/lib/utils';
 import { useUIStore, useAuthStore } from '@/store';
+import { Pin, CheckCheck, Check } from 'lucide-react';
 
 interface ChatListItemProps {
   chat: Chat;
   isActive?: boolean;
   isTyping?: boolean;
+  isPinned?: boolean;
 }
 
 export const ChatListItem: React.FC<ChatListItemProps> = ({
   chat,
   isActive = false,
   isTyping = false,
+  isPinned = false,
 }) => {
   const router = useRouter();
   const { isMobile, setSidebarOpen } = useUIStore();
@@ -27,7 +30,20 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
     ? null
     : chat.users?.find(u => u.id !== currentUser?.id);
   const displayName = chat.name || otherUser?.name || 'Unknown';
-  const lastMessageContent = chat.lastMessage?.content || 'No messages yet';
+
+  const getPreviewText = () => {
+    if (!chat.lastMessage) return 'No messages yet';
+    switch (chat.lastMessage.type) {
+      case 'IMAGE': return 'Sent an image';
+      case 'VIDEO': return 'Sent a video';
+      case 'AUDIO': return 'Sent an audio message';
+      case 'FILE': return 'Sent a file';
+      case 'LOCATION': return 'Sent a location';
+      default: return chat.lastMessage.content;
+    }
+  };
+
+  const lastMessageContent = getPreviewText();
   const lastMessageTime = chat.lastMessage?.createdAt;
   const hasUnread = chat.unreadCount > 0;
 
@@ -38,108 +54,63 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    }
-  };
-
   return (
     <button
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role="listitem"
-      tabIndex={0}
-      aria-label={`${displayName}${hasUnread ? `, ${chat.unreadCount} unread messages` : ''}${isTyping ? ', typing' : ''}`}
-      aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'group w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2',
-        isActive
-          ? 'bg-[var(--accent-primary)]/10 shadow-sm'
-          : 'hover:bg-[var(--background-hover)] hover:shadow-sm',
-        hasUnread && !isActive && 'bg-[var(--background-secondary)]'
+        'flex items-center p-2 mb-1 rounded-md cursor-pointer transition-all w-full text-left group',
+        isActive ? 'bg-[var(--accent-primary)]/10' : 'hover:bg-[var(--background-hover)]'
       )}
     >
-      {/* Avatar with status */}
+      {/* Avatar */}
       <div className="relative flex-shrink-0">
-        {chat.isGroup ? (
-          <div
-            className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] text-white font-semibold flex items-center justify-center text-sm shadow-md"
-            aria-hidden="true"
-          >
-            {displayName.slice(0, 2).toUpperCase()}
-          </div>
-        ) : (
-          <UserAvatar user={otherUser} size="md" showStatus />
-        )}
-
-        {/* Unread indicator dot */}
-        {hasUnread && !isActive && (
-          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[var(--accent-primary)] rounded-full border-2 border-[var(--background-primary)] animate-pulse" />
-        )}
+        <UserAvatar
+          user={chat.isGroup ? null : otherUser}
+          name={chat.isGroup ? displayName : undefined}
+          size="mdl"
+          showStatus={!chat.isGroup}
+        />
       </div>
 
-      {/* Chat Info */}
-      <div className="flex-1 min-w-0 text-left">
-        <div className="flex items-center justify-between gap-2 mb-0.5">
-          <h3
-            className={cn(
-              'font-semibold text-sm truncate transition-colors',
-              hasUnread
-                ? 'text-[var(--text-primary)]'
-                : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]',
-              isActive && 'text-[var(--accent-primary)]'
-            )}
-            aria-hidden="true"
-          >
+      {/* Content */}
+      <div className="ml-3 flex-1 min-w-0">
+        {/* Name and Time */}
+        <div className="flex justify-between items-baseline mb-0.5">
+          <h3 className={cn(
+            'text-sm font-light tracking-tight truncate leading-tight',
+            isActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-primary)]'
+          )}>
             {displayName}
           </h3>
-          {lastMessageTime && (
-            <span
-              className={cn(
-                'text-[11px] flex-shrink-0 transition-colors',
-                hasUnread
-                  ? 'text-[var(--accent-primary)] font-medium'
-                  : 'text-[var(--text-muted)]'
-              )}
-              aria-hidden="true"
-            >
-              {formatDate(lastMessageTime)}
-            </span>
-          )}
+          <span className="text-[10px] font-light tracking-tight text-[var(--text-muted)] flex-shrink-0 ml-2">
+            {lastMessageTime ? formatDate(lastMessageTime) : ''}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          {isTyping ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-[var(--accent-primary)] font-medium">typing</span>
-              <div className="flex gap-0.5">
-                <span className="typing-dot" />
-                <span className="typing-dot" />
-                <span className="typing-dot" />
-              </div>
-            </div>
-          ) : (
-            <p
-              className={cn(
-                'text-xs truncate transition-colors',
-                hasUnread
-                  ? 'text-[var(--text-primary)] font-medium'
-                  : 'text-[var(--text-muted)]'
-              )}
-              aria-hidden="true"
-            >
-              {truncate(lastMessageContent, 45)}
-            </p>
-          )}
-
-          {hasUnread && (
-            <span className="unread-badge flex-shrink-0 animate-scale-in" aria-hidden="true">
-              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
-            </span>
-          )}
+        {/* Last Message and Indicators */}
+        <div className="flex justify-between items-center">
+          <p className={cn(
+            'text-xs truncate max-w-[160px] leading-tight',
+            hasUnread ? 'font-light tracking-tight text-[var(--text-primary)]' : 'text-[var(--text-secondary)] font-light tracking-tight'
+          )}>
+            {lastMessageContent}
+          </p>
+          <div className="flex items-center space-x-1.5 flex-shrink-0 ml-2">
+            {/* Pinned Indicator */}
+            {isPinned && (
+              <Pin size={12} className="text-[var(--accent-primary)] fill-[var(--accent-primary)]" />
+            )}
+            {/* Unread Badge */}
+            {hasUnread && (
+              <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-light tracking-tight text-white bg-[var(--badge-unread)] rounded-full shadow-sm">
+                {chat.unreadCount}
+              </span>
+            )}
+            {/* Read Status - only show if no unread and I sent the last message */}
+            {!hasUnread && chat.lastMessage && chat.lastMessage.senderId === currentUser?.id && (
+              <CheckCheck size={14} className="text-[#a78bfa]" />
+            )}
+          </div>
         </div>
       </div>
     </button>

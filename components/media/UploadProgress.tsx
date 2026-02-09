@@ -21,11 +21,11 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({
   error,
 }) => {
   return (
-    <div className="bg-[var(--background-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+    <div className="bg-[var(--background-secondary)] rounded-md p-4 border border-[var(--border-color)]">
       <div className="flex items-start gap-3">
         {/* File Icon */}
         <div className={cn(
-          'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center',
+          'flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center',
           status === 'uploading' && 'bg-[var(--accent-primary)]/10',
           status === 'success' && 'bg-[var(--success)]/10',
           status === 'error' && 'bg-[var(--danger)]/10'

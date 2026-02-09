@@ -105,3 +105,10 @@ export const cancelCall = (chatId: string) => {
     socket.emit('cancelCall', { chatId });
   }
 };
+
+export const leaveCall = (chatId: string) => {
+  if (socket && socket.connected) {
+    console.log('🚪 Leaving call:', { chatId });
+    socket.emit('leaveCall', { chatId });
+  }
+};

@@ -6,3 +6,5 @@ export { MessageInput } from './MessageInput';
 export { InviteModal } from './InviteModal';
 export { NewChatModal } from './NewChatModal';
 export { NewGroupModal } from './NewGroupModal';
+export { GroupInfoPanel } from './GroupInfoPanel';
+export { MessageReactions } from './MessageReactions';

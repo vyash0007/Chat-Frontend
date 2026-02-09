@@ -38,9 +38,10 @@ export const OutgoingCallModal: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center">
-            {/* Backdrop with gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/95 via-indigo-900/90 to-purple-900/95 backdrop-blur-md" />
+        <div className="fixed inset-0 z-[var(--z-call)] flex items-center justify-center font-light tracking-tight">
+            {/* Backdrop with extreme depth */}
+            <div className="absolute inset-0 bg-[#0a0a0c]/98 backdrop-blur-2xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/10 via-transparent to-[var(--accent-primary)]/10" />
 
             {/* Animated rings */}
             {outgoingCall.status === 'ringing' && (
@@ -55,13 +56,13 @@ export const OutgoingCallModal: React.FC = () => {
             <div className="relative z-10 flex flex-col items-center text-center px-8">
                 {/* Call type icon with animation */}
                 <div className="relative mb-8">
-                    <div className={`absolute inset-0 rounded-full blur-2xl opacity-40 ${outgoingCall.status === 'rejected'
-                            ? 'bg-red-500'
-                            : 'bg-gradient-to-br from-indigo-400 to-purple-600 animate-pulse'
+                    <div className={`absolute inset-0 rounded-md blur-3xl opacity-30 ${outgoingCall.status === 'rejected'
+                        ? 'bg-[var(--danger)]'
+                        : 'bg-[var(--accent-primary)] animate-pulse'
                         }`} />
-                    <div className={`relative w-28 h-28 rounded-full flex items-center justify-center border-4 transition-all duration-300 ${outgoingCall.status === 'rejected'
-                            ? 'bg-red-500/20 border-red-500/40'
-                            : 'bg-gradient-to-br from-indigo-500 to-purple-600 border-white/20'
+                    <div className={`relative w-28 h-28 rounded-md flex items-center justify-center border-4 transition-all duration-300 ${outgoingCall.status === 'rejected'
+                        ? 'bg-[var(--danger)]/20 border-[var(--danger)]/40'
+                        : 'bg-[var(--accent-gradient)] border-[var(--glass-border)] shadow-glow'
                         }`}>
                         {outgoingCall.isVideoCall ? (
                             <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,10 +77,10 @@ export const OutgoingCallModal: React.FC = () => {
                 </div>
 
                 {/* Status text */}
-                <h2 className="text-3xl font-bold text-white mb-2">
+                <h2 className="text-3xl font-light tracking-tight text-white mb-2">
                     {outgoingCall.isVideoCall ? 'Video Call' : 'Voice Call'}
                 </h2>
-                <p className={`text-lg mb-10 ${outgoingCall.status === 'rejected' ? 'text-red-400' : 'text-white/70'
+                <p className={`text-lg mb-10 font-light tracking-tight ${outgoingCall.status === 'rejected' ? 'text-[var(--danger)]' : 'text-[var(--text-muted)]'
                     }`}>
                     {getStatusMessage()}
                 </p>
@@ -99,12 +100,12 @@ export const OutgoingCallModal: React.FC = () => {
                         onClick={handleCancel}
                         className="group flex flex-col items-center"
                     >
-                        <div className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-red-500/40">
+                        <div className="w-16 h-16 rounded-sm bg-[var(--danger)] text-white flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-[var(--danger)]/40 active:scale-90">
                             <svg className="w-8 h-8 rotate-[135deg]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
                         </div>
-                        <span className="mt-3 text-sm text-white/60 font-medium">Cancel</span>
+                        <span className="mt-4 text-[10px] text-[var(--text-muted)] font-light tracking-[0.2em] uppercase">Cancel</span>
                     </button>
                 )}
             </div>

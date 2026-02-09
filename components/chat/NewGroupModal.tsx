@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, Input, Button } from '@/components/ui';
+import { UserAvatar } from '@/components/user';
 import { useChatStore, useUserStore } from '@/store';
 import { User } from '@/types';
+import { Plus } from 'lucide-react';
 
 interface NewGroupModalProps {
   isOpen: boolean;
@@ -107,69 +109,65 @@ export const NewGroupModal: React.FC<NewGroupModalProps> = ({
       title="New Group Chat"
     >
       <div className="space-y-4">
-        {/* Group Name Input */}
-        <div>
-          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-            Group Name
-          </label>
-          <Input
-            type="text"
-            placeholder="Enter group name..."
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            disabled={isCreating}
-            required
-          />
+        {/* Inputs Group */}
+        <div className="space-y-6 px-2">
+          <div>
+            <label className="block text-[10px] font-light text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">
+              Group Identity
+            </label>
+            <input
+              type="text"
+              placeholder="Enter group name..."
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              className="w-full px-6 py-4 bg-[var(--background-secondary)] rounded-md border border-[var(--border-color)] focus:border-[var(--accent-primary)] outline-none text-[var(--text-primary)] font-light tracking-tight placeholder:text-[var(--text-muted)] transition-all text-lg shadow-inner"
+              disabled={isCreating}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-light text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">
+              Add Members
+            </label>
+            <div className="relative group">
+              <svg className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-[#7c5dfa] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search by phone or email..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full pl-14 pr-6 py-4 bg-[var(--background-secondary)] rounded-md border border-[var(--border-color)] focus:border-[var(--accent-primary)] outline-none text-[var(--text-primary)] font-light tracking-tight placeholder:text-[var(--text-muted)] transition-all"
+                disabled={isLoading || isCreating}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Search Input */}
-        <div>
-          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-            Add Members
-          </label>
-          <Input
-            type="text"
-            placeholder="Search by phone or email..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            disabled={isLoading || isCreating}
-          />
-          <p className="text-xs text-[var(--text-muted)] mt-1">
-            Enter phone number or email address
-          </p>
-        </div>
-
-        {/* Selected Users */}
+        {/* Selected Members Cards */}
         {selectedUsers.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-[var(--text-primary)]">
+          <div className="px-2">
+            <label className="block text-[10px] font-light text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">
               Members ({selectedUsers.length})
-            </p>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
+            </label>
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
               {selectedUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-[var(--background-hover)] p-2 rounded-lg flex items-center justify-between"
+                  className="bg-[var(--background-tertiary)] pl-2 pr-4 py-2 rounded-md border border-[var(--border-color)] flex items-center gap-2 group animate-scale-in"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[var(--accent-primary)] text-white text-sm font-semibold flex items-center justify-center">
-                      {user.name?.charAt(0).toUpperCase() || 'U'}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-[var(--text-primary)]">
-                        {user.name || 'Unknown'}
-                      </p>
-                      <p className="text-xs text-[var(--text-muted)]">
-                        {user.phone || user.email}
-                      </p>
-                    </div>
-                  </div>
+                  <UserAvatar user={user} size="sm" />
+                  <span className="text-sm font-light tracking-tight text-[var(--text-primary)]">
+                    {user.name?.split(' ')[0] || 'Unknown'}
+                  </span>
                   <button
                     onClick={() => handleRemoveUser(user.id)}
-                    className="p-1 hover:bg-[var(--background-secondary)] rounded transition-colors"
+                    className="w-5 h-5 flex items-center justify-center rounded-full bg-white shadow-sm text-gray-400 hover:text-red-500 transition-all"
                     disabled={isCreating}
                   >
-                    <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
@@ -179,31 +177,31 @@ export const NewGroupModal: React.FC<NewGroupModalProps> = ({
           </div>
         )}
 
-        {/* Search Results */}
+        {/* Search Results List */}
         {searchResults.length > 0 && (
-          <div className="border border-[var(--divider-color)] rounded-lg max-h-48 overflow-y-auto">
-            {searchResults.map((user) => (
-              <button
-                key={user.id}
-                onClick={() => handleAddUser(user)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-[var(--background-hover)] transition-colors text-left"
-              >
-                <div className="w-10 h-10 rounded-full bg-[var(--accent-primary)] text-white font-semibold flex items-center justify-center flex-shrink-0">
-                  {user.name?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[var(--text-primary)] truncate">
-                    {user.name || 'Unknown'}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] truncate">
-                    {user.phone || user.email}
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-[var(--accent-primary)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            ))}
+          <div className="px-2">
+            <div className="bg-[var(--background-modal)] rounded-md overflow-hidden border border-[var(--border-color)] divide-y divide-[var(--divider-color)]">
+              {searchResults.map((user) => (
+                <button
+                  key={user.id}
+                  onClick={() => handleAddUser(user)}
+                  className="w-full flex items-center gap-4 p-5 hover:bg-[var(--background-hover)] transition-all text-left group"
+                >
+                  <UserAvatar user={user} size="mdl" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-light tracking-tight text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors truncate">
+                      {user.name || 'Unknown'}
+                    </p>
+                    <p className="text-sm font-light tracking-tight text-[var(--text-muted)] truncate">
+                      {user.phone || user.email}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 rounded-md bg-[var(--background-secondary)] flex items-center justify-center text-[var(--text-muted)] group-hover:bg-[var(--accent-soft)] group-hover:text-[var(--accent-primary)] transition-all opacity-0 group-hover:opacity-100 border border-[var(--border-color)]">
+                    <Plus size={20} />
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -221,13 +219,14 @@ export const NewGroupModal: React.FC<NewGroupModalProps> = ({
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-2">
+        {/* Modern Action Buttons */}
+        <div className="flex items-center gap-4 pt-4 px-2">
           <Button
             type="button"
             variant="secondary"
             onClick={handleClose}
             disabled={isCreating}
+            className="flex-1 py-4 rounded-md font-light tracking-tight"
           >
             Cancel
           </Button>
@@ -235,6 +234,7 @@ export const NewGroupModal: React.FC<NewGroupModalProps> = ({
             type="button"
             onClick={handleCreateGroup}
             disabled={!groupName.trim() || selectedUsers.length === 0 || isCreating}
+            className="flex-[2] py-4 rounded-md font-light tracking-tight shadow-glow"
           >
             {isCreating ? 'Creating...' : 'Create Group'}
           </Button>

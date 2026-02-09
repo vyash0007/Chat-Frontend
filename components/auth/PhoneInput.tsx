@@ -28,7 +28,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-[var(--text-primary)]" htmlFor="phone-input">
+      <label className="block text-sm font-light tracking-tight text-[var(--text-primary)]" htmlFor="phone-input">
         Phone Number
       </label>
 
@@ -54,7 +54,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
         </p>
       )}
 
-      <p className="text-sm text-[var(--text-muted)]">
+      <p className="text-sm text-[var(--text-muted)] font-light tracking-tight">
         We'll send you a verification code via SMS
       </p>
     </div>

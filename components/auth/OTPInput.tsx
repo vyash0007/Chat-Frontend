@@ -85,7 +85,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-[var(--text-primary)]">
+      <label className="block text-sm font-light tracking-tight text-[var(--text-primary)] text-center">
         Verification Code
       </label>
       <div className="flex gap-2 justify-center">
@@ -102,7 +102,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             onPaste={handlePaste}
             disabled={disabled}
             className={cn(
-              'w-12 h-12 text-center text-lg font-semibold rounded-lg border border-[var(--border-color)] bg-[var(--background-primary)] text-[var(--text-primary)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)] disabled:opacity-50 transition-all',
+              'w-12 h-12 text-center text-lg font-light rounded-sm border border-[var(--border-color)] bg-[var(--background-primary)] text-[var(--text-primary)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] disabled:opacity-50 transition-all',
               error && 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]',
               digit && 'border-[var(--accent-primary)]'
             )}
@@ -113,7 +113,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
       {error && (
         <p className="text-sm text-[var(--danger)] text-center">{error}</p>
       )}
-      <p className="text-sm text-[var(--text-muted)] text-center">
+      <p className="text-sm text-[var(--text-muted)] text-center font-light tracking-tight">
         Enter the 6-digit code sent to your phone
       </p>
     </div>

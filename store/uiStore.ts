@@ -4,6 +4,7 @@ import { create } from 'zustand';
 
 type ModalType =
   | 'createChat'
+  | 'createGroup'
   | 'chatSettings'
   | 'profile'
   | 'settings'
@@ -17,6 +18,7 @@ interface ModalData {
 
 interface UIState {
   sidebarOpen: boolean;
+  groupInfoPanelOpen: boolean;
   currentModal: ModalType;
   modalData: ModalData;
   theme: 'light' | 'dark' | 'system';
@@ -25,6 +27,8 @@ interface UIState {
   // Actions
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  toggleGroupInfoPanel: () => void;
+  setGroupInfoPanelOpen: (open: boolean) => void;
   openModal: (modal: ModalType, data?: ModalData) => void;
   closeModal: () => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -33,6 +37,7 @@ interface UIState {
 
 export const useUIStore = create<UIState>()((set) => ({
   sidebarOpen: true,
+  groupInfoPanelOpen: false,
   currentModal: null,
   modalData: {},
   theme: 'system',
@@ -41,6 +46,10 @@ export const useUIStore = create<UIState>()((set) => ({
   toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
 
   setSidebarOpen: (open: boolean) => set({ sidebarOpen: open }),
+
+  toggleGroupInfoPanel: () => set(state => ({ groupInfoPanelOpen: !state.groupInfoPanelOpen })),
+
+  setGroupInfoPanelOpen: (open: boolean) => set({ groupInfoPanelOpen: open }),
 
   openModal: (modal: ModalType, data: ModalData = {}) =>
     set({ currentModal: modal, modalData: data }),

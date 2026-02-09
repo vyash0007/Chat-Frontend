@@ -25,9 +25,10 @@ interface CallState {
     setOutgoingCall: (call: OutgoingCall | null) => void;
     updateOutgoingCallStatus: (status: OutgoingCall['status']) => void;
     clearCalls: () => void;
+    endCall: () => void;
 }
 
-export const useCallStore = create<CallState>()((set) => ({
+export const useCallStore = create<CallState>()((set, get) => ({
     incomingCall: null,
     outgoingCall: null,
 
@@ -42,4 +43,21 @@ export const useCallStore = create<CallState>()((set) => ({
     })),
 
     clearCalls: () => set({ incomingCall: null, outgoingCall: null }),
+
+    endCall: () => {
+        const { incomingCall, outgoingCall } = get();
+        const { leaveCall, cancelCall } = require('@/lib/socket');
+
+        if (incomingCall) {
+            leaveCall(incomingCall.chatId);
+        } else if (outgoingCall) {
+            if (outgoingCall.status === 'ringing') {
+                cancelCall(outgoingCall.chatId);
+            } else {
+                leaveCall(outgoingCall.chatId);
+            }
+        }
+
+        set({ incomingCall: null, outgoingCall: null });
+    },
 }));

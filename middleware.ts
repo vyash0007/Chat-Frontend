@@ -25,11 +25,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(chatsUrl);
   }
 
-  // Redirect root to login or chats based on auth status
-  if (pathname === '/') {
-    const redirectUrl = new URL(token ? '/chats' : '/login', request.url);
-    return NextResponse.redirect(redirectUrl);
-  }
+  // No longer redirecting root to login/chats by default
+  // This allows the landing page (at '/') to be shown correctly
 
   return NextResponse.next();
 }

@@ -24,7 +24,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
         <video
           src={src}
           controls={isPlaying}
-          className="rounded-lg w-full"
+          className="rounded-md w-full"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
@@ -33,7 +33,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
         {!isPlaying && (
           <button
             onClick={() => setIsPlaying(true)}
-            className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors rounded-lg"
+            className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors rounded-md"
           >
             <div className="bg-[var(--accent-primary)] rounded-full p-4 group-hover:scale-110 transition-transform">
               <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -47,7 +47,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
         {showLightbox && (
           <button
             onClick={() => setLightboxOpen(true)}
-            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 rounded-md p-2 opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="View fullscreen"
           >
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

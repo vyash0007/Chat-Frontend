@@ -87,11 +87,10 @@ export const InviteModal: React.FC<InviteModalProps> = ({
             Invitation Type
           </label>
           <div className="space-y-2">
-            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-              invitationType === InvitationType.PERMANENT_MEMBER
+            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${invitationType === InvitationType.PERMANENT_MEMBER
                 ? 'border-[var(--accent-primary)] bg-[var(--background-hover)]'
                 : 'border-[var(--divider-color)] hover:bg-[var(--background-hover)]'
-            }`}>
+              }`}>
               <input
                 type="radio"
                 name="invitationType"
@@ -111,11 +110,10 @@ export const InviteModal: React.FC<InviteModalProps> = ({
               </div>
             </label>
 
-            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-              invitationType === InvitationType.TEMPORARY_CALL
+            <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${invitationType === InvitationType.TEMPORARY_CALL
                 ? 'border-[var(--accent-primary)] bg-[var(--background-hover)]'
                 : 'border-[var(--divider-color)] hover:bg-[var(--background-hover)]'
-            }`}>
+              }`}>
               <input
                 type="radio"
                 name="invitationType"
@@ -139,14 +137,14 @@ export const InviteModal: React.FC<InviteModalProps> = ({
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-md text-sm">
             {error}
           </div>
         )}
 
         {/* Success Message */}
         {successMessage && (
-          <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-lg text-sm">
+          <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-md text-sm">
             {successMessage}
           </div>
         )}

@@ -117,7 +117,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         onDrop={handleDrop}
         onClick={handleClick}
         className={cn(
-          'relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all',
+          'relative border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-all',
           isDragging
             ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/5'
             : 'border-[var(--border-color)] hover:border-[var(--accent-primary)]/50 hover:bg-[var(--background-hover)]',

@@ -26,18 +26,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
       case MessageType.IMAGE:
         return (
-          <div className="relative overflow-hidden rounded-xl">
+          <div className="relative overflow-hidden rounded-md">
             <ImagePreview
               src={message.content}
               alt="Shared image"
-              className="max-w-xs sm:max-w-sm hover:scale-105 transition-transform duration-300"
+              className="max-w-xs sm:max-w-sm"
             />
           </div>
         );
 
       case MessageType.VIDEO:
         return (
-          <div className="relative overflow-hidden rounded-xl">
+          <div className="relative overflow-hidden rounded-md">
             <VideoPreview
               src={message.content}
               className="max-w-xs sm:max-w-sm"
@@ -51,10 +51,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             href={message.content}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 p-3 bg-[var(--background-tertiary)] rounded-xl hover:bg-[var(--background-hover)] transition-all duration-200 group hover-lift"
+            className="flex items-center gap-3 p-3 bg-[#2d2d3a] rounded-md hover:bg-[#353545] transition-all duration-200 group hover-lift"
           >
-            <div className="w-10 h-10 rounded-lg bg-[var(--accent-primary)]/10 flex items-center justify-center group-hover:bg-[var(--accent-primary)]/20 transition-colors">
-              <svg className="w-5 h-5 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 rounded-md bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -64,10 +64,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium block truncate">Download File</span>
-              <span className="text-xs text-[var(--text-muted)]">Click to open</span>
+              <span className="text-sm font-bold block truncate text-white">Download File</span>
+              <span className="text-xs text-white/50">Click to open</span>
             </div>
-            <svg className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
           </a>
@@ -125,74 +125,69 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   return (
     <div
       className={cn(
-        'flex items-end gap-2 mb-3 px-3 sm:px-4 animate-fade-in-up',
+        'flex items-end gap-3 mb-2 px-6 animate-fade-in-up',
         isSent ? 'flex-row-reverse' : 'flex-row'
       )}
     >
-      {/* Avatar for received messages */}
+      {/* Avatar for received messages - Rounded Square */}
       {!isSent && message.sender && (
-        <UserAvatar user={message.sender} size="sm" className="flex-shrink-0 mb-1" />
+        <UserAvatar
+          user={message.sender}
+          size="sm"
+          className="flex-shrink-0 mb-1"
+        />
       )}
 
       {/* Message Bubble */}
-      <div
-        className={cn(
-          'relative max-w-[80%] sm:max-w-[70%] md:max-w-[65%] rounded-2xl px-4 py-3 transition-all duration-200',
-          isSent
-            ? 'bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] text-white rounded-br-md shadow-lg shadow-[var(--accent-primary)]/20'
-            : 'bg-[var(--background-secondary)] text-[var(--text-primary)] rounded-bl-md shadow-md'
-        )}
-      >
+      <div className="flex flex-col gap-1 max-w-[80%] sm:max-w-[70%]">
         {/* Sender name for group chats */}
         {!isSent && message.sender && (
-          <p className="text-xs font-semibold text-[var(--accent-primary)] mb-1.5">
+          <span className="text-xs font-light tracking-tight text-[var(--text-secondary)] ml-1">
             {message.sender.name}
-          </p>
+          </span>
         )}
 
-        {/* Message content */}
-        <div className="w-full overflow-hidden">
-          {renderContent()}
-        </div>
-
-        {/* Message footer */}
         <div
           className={cn(
-            'flex items-center gap-2 mt-2',
-            isSent ? 'justify-end' : 'justify-start'
+            'relative transition-all duration-200 shadow-sm overflow-hidden',
+            (message.type === MessageType.IMAGE || message.type === MessageType.VIDEO) ? 'p-0' : 'px-3.5 py-2',
+            isSent
+              ? 'bg-gradient-to-br from-[#a78bfa] to-[#8b5cf6] text-white rounded-md rounded-br-md'
+              : 'bg-[var(--message-received-bg)] text-[var(--message-received-text)] rounded-md rounded-bl-md'
           )}
         >
-          <span
+          {/* Message content */}
+          <div className="w-full">
+            {renderContent()}
+          </div>
+
+          {/* Message footer - Floating relative or below */}
+          <div
             className={cn(
-              'text-[11px] font-medium',
-              isSent ? 'text-white/70' : 'text-[var(--text-muted)]'
+              'flex items-center gap-1.5',
+              (message.type === MessageType.IMAGE || message.type === MessageType.VIDEO)
+                ? 'absolute bottom-2 right-3'
+                : 'mt-0.5',
+              isSent ? 'justify-end' : 'justify-start'
             )}
           >
-            {formatTime(message.createdAt)}
-          </span>
-          <span className={isSent ? 'text-white/80' : 'text-[var(--text-muted)]'}>
-            {renderStatus()}
-          </span>
-        </div>
-
-        {/* Reactions */}
-        {message.reactions && message.reactions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2 -mb-1">
-            {message.reactions.map((reaction, index) => (
-              <button
-                key={index}
-                className="flex items-center gap-1 px-2.5 py-1 bg-[var(--background-primary)]/80 backdrop-blur-sm rounded-full text-xs hover:scale-110 transition-transform shadow-sm"
-              >
-                <span className="text-sm">{reaction.emoji}</span>
-                <span className="text-[var(--text-muted)] font-medium">1</span>
-              </button>
-            ))}
+            <span className={cn(
+              "text-[11px] font-light tracking-tight",
+              (isSent || message.type === MessageType.IMAGE || message.type === MessageType.VIDEO) ? "text-white [text-shadow:_0_1px_2px_rgba(0,0,0,0.5)]" : "text-[var(--text-muted)]"
+            )}>
+              {formatTime(message.createdAt)}
+            </span>
+            {isSent && (
+              <span className="shrink-0">
+                {renderStatus()}
+              </span>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Spacer for sent messages */}
-      {isSent && <div className="w-8 flex-shrink-0" />}
-    </div>
+      {/* Spacer for alignment if no avatar */}
+      {isSent && <div className="w-8 flex-shrink-0 lg:hidden" />}
+    </div >
   );
 };

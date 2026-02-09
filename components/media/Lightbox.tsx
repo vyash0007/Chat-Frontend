@@ -73,7 +73,7 @@ export const Lightbox: React.FC<LightboxProps> = ({
                   e.stopPropagation();
                   handleZoomOut();
                 }}
-                className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
+                className="p-2 rounded-md hover:bg-white/10 text-white transition-colors"
                 aria-label="Zoom out"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,7 +96,7 @@ export const Lightbox: React.FC<LightboxProps> = ({
                   e.stopPropagation();
                   handleZoomIn();
                 }}
-                className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
+                className="p-2 rounded-md hover:bg-white/10 text-white transition-colors"
                 aria-label="Zoom in"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -112,7 +112,7 @@ export const Lightbox: React.FC<LightboxProps> = ({
               e.stopPropagation();
               handleDownload();
             }}
-            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
+            className="p-2 rounded-md hover:bg-white/10 text-white transition-colors"
             aria-label="Download"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

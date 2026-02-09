@@ -1,147 +1,93 @@
 @import "tailwindcss";
 
 :root {
-  /* Background Colors - Discord/Slack inspired */
-  --background-primary: #ffffff;
-  --background-secondary: #f8f9fa;
-  --background-tertiary: #f0f1f3;
-  --background-hover: #e9ecef;
-  --background-active: #dee2e6;
-  --background-modal: rgba(255, 255, 255, 0.95);
+  /* Background Colors - True Premium Dark Palette */
+  --background-primary: #0f0f12;
+  --background-secondary: #0a0a0c;
+  --background-tertiary: #1e1f25;
+  --background-hover: #27272a;
+  --background-active: #3f3f46;
+  --background-modal: rgba(15, 15, 18, 0.98);
 
   /* Text Colors */
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #9ca3af;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
   --text-inverse: #ffffff;
 
-  /* Accent Colors - Vibrant gradient-friendly */
-  --accent-primary: #6366f1;
-  --accent-secondary: #8b5cf6;
-  --accent-hover: #4f46e5;
-  --accent-active: #4338ca;
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  /* Accent Colors - Vibrant Purple */
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-active: #5b21b6;
+  --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  --accent-soft: rgba(139, 92, 246, 0.1);
+
+  /* Message Bubble Colors */
+  --message-sent-bg: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  --message-sent-text: #ffffff;
+  --message-received-bg: #1c1c21;
+  --message-received-text: #f9fafb;
 
   /* Semantic Colors */
-  --success: #10b981;
-  --success-hover: #059669;
-  --success-light: rgba(16, 185, 129, 0.1);
+  --success: #22c55e;
   --warning: #f59e0b;
-  --warning-hover: #d97706;
-  --warning-light: rgba(245, 158, 11, 0.1);
   --danger: #ef4444;
-  --danger-hover: #dc2626;
-  --danger-light: rgba(239, 68, 68, 0.1);
   --info: #3b82f6;
-  --info-light: rgba(59, 130, 246, 0.1);
+  --status-online: #22c55e;
 
-  /* Status Colors */
-  --status-online: #10b981;
-  --status-away: #f59e0b;
-  --status-dnd: #ef4444;
-  --status-offline: #9ca3af;
+  /* Brand Specific */
+  --badge-unread: #ec4899;
 
   /* Border & Divider */
-  --border-color: #e5e7eb;
-  --divider-color: #e5e7eb;
-  --border-focus: #6366f1;
+  --border-color: #27272a;
+  --divider-color: #18181b;
+  --border-focus: #8b5cf6;
 
   /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(22, 22, 26, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 
-  /* Shadows - Enhanced depth */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+  /* Shadows - Deep Depth */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.25);
 
   /* Layout Dimensions */
+  --primary-nav-width: 80px;
   --sidebar-width: 320px;
-  --header-height: 64px;
-  --input-height: 80px;
-  --avatar-xs: 24px;
-  --avatar-sm: 32px;
-  --avatar-md: 40px;
-  --avatar-lg: 80px;
-  --avatar-xl: 120px;
+  --info-panel-width: 340px;
+  --header-height: 80px;
+  --input-height: 88px;
 
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --spacing-2xl: 32px;
-  --spacing-3xl: 48px;
-
-  /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
+  /* Border Radius - Standardized to Sleek Refined Aesthetic */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
   --radius-full: 9999px;
 
-  /* Z-Index Layers */
-  --z-dropdown: 1000;
-  --z-sticky: 1020;
-  --z-fixed: 1030;
-  --z-modal-backdrop: 1040;
-  --z-modal: 1050;
-  --z-popover: 1060;
-  --z-tooltip: 1070;
+  /* Z-Index Hierarchy */
+  --z-base: 1;
+  --z-above: 5;
+  --z-header: 10;
+  --z-sidebar: 20;
+  --z-panel: 30;
+  --z-modal-backdrop: 100;
+  --z-modal: 110;
+  --z-tooltip: 200;
+  --z-call-backdrop: 1000;
+  --z-call: 1010;
 
   /* Transitions */
-  --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-@theme inline {
-  --color-background: var(--background-primary);
-  --color-foreground: var(--text-primary);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Background Colors - Dark Mode */
-    --background-primary: #0f0f10;
-    --background-secondary: #18181b;
-    --background-tertiary: #27272a;
-    --background-hover: #3f3f46;
-    --background-active: #52525b;
-    --background-modal: rgba(24, 24, 27, 0.95);
-
-    /* Text Colors - Dark Mode */
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
-    --text-inverse: #0f0f10;
-
-    /* Border & Divider - Dark Mode */
-    --border-color: #3f3f46;
-    --divider-color: #27272a;
-
-    /* Glassmorphism - Dark Mode */
-    --glass-bg: rgba(24, 24, 27, 0.8);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-
-    /* Shadows - Dark Mode */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
-  }
 }
 
 body {
@@ -178,10 +124,9 @@ body {
   color: var(--text-inverse);
 }
 
-/* Focus Visible */
+/* Focus Visible - Removed intrusive purple box as requested */
 *:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* Mobile Touch Targets */
@@ -259,7 +204,7 @@ body {
 .phone-input .PhoneInputCountry {
   padding: 12px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--background-secondary);
   cursor: pointer;
   transition: all 0.2s;
@@ -276,7 +221,7 @@ body {
   flex: 1;
   padding: 12px 16px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--background-secondary);
   color: var(--text-primary);
   font-size: 16px;

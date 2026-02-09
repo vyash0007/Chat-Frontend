@@ -118,7 +118,7 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
     return (
         <div
             className={cn(
-                'flex items-start gap-3 p-4 rounded-xl border shadow-lg backdrop-blur-sm animate-slide-in-right',
+                'flex items-start gap-3 p-4 rounded-md border shadow-lg backdrop-blur-sm animate-slide-in-right',
                 style.bg,
                 style.border,
                 'bg-[var(--background-modal)]'
@@ -129,7 +129,7 @@ const ToastItem: React.FC<{ toast: Toast; onRemove: (id: string) => void }> = ({
             <p className="flex-1 text-sm font-medium text-[var(--text-primary)]">{toast.message}</p>
             <button
                 onClick={() => onRemove(toast.id)}
-                className="flex-shrink-0 p-1 rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                className="flex-shrink-0 p-1 rounded-md hover:bg-[var(--background-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                 aria-label="Dismiss"
             >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -74,7 +74,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     const variantClasses = {
         text: 'h-4 rounded',
         circular: 'rounded-full',
-        rectangular: 'rounded-lg',
+        rectangular: 'rounded-md',
     };
 
     return (

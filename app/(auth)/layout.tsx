@@ -10,16 +10,16 @@ export default function AuthLayout({
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--accent-primary)] text-white text-2xl font-bold mb-4">
-            C
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-sm bg-[var(--accent-primary)] text-white mb-4 shadow-lg shadow-[var(--accent-primary)]/20">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" /></svg>
           </div>
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
-            Chat App
+          <h2 className="text-2xl font-light tracking-tight text-[var(--text-primary)]">
+            Prism
           </h2>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-[var(--background-primary)] rounded-2xl shadow-[var(--shadow-xl)] p-8 border border-[var(--border-color)]">
+        <div className="bg-[var(--background-primary)] rounded-md shadow-2xl p-8 border border-[var(--border-color)]">
           {children}
         </div>
       </div>

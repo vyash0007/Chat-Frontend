@@ -36,67 +36,70 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-[var(--text-primary)] mb-1.5"
+            className="block text-sm font-light tracking-tight text-[var(--text-primary)] mb-1.5"
           >
             {label}
           </label>
         )}
         <div className="relative">
-          {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
-              {leftIcon}
-            </div>
-          )}
-          <input
-            id={inputId}
-            ref={ref}
-            className={cn(
-              'w-full rounded-lg border border-[var(--border-color)] bg-[var(--background-primary)] px-3 py-2 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-1 focus:ring-[var(--border-focus)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
-              leftIcon && 'pl-10',
-              (rightIcon || isLoading) && 'pr-10',
-              error && 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]',
-              className
+          <div className={cn(
+            "flex items-center bg-[var(--background-secondary)] rounded-sm px-4 py-2.5 border border-[var(--border-color)] focus-within:border-[var(--accent-primary)]/40 transition-colors shadow-sm",
+            disabled && "opacity-50 cursor-not-allowed",
+            error && 'border-[var(--danger)] focus-within:border-[var(--danger)]'
+          )}>
+            {leftIcon && (
+              <div className="text-[var(--text-muted)] group-focus-within:text-[var(--accent-primary)] transition-colors mr-3">
+                {leftIcon}
+              </div>
             )}
-            disabled={disabled || isLoading}
-            aria-invalid={error ? 'true' : 'false'}
-            aria-describedby={
-              error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
-            }
-            {...props}
-          />
-          {(rightIcon || isLoading) && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
-              {isLoading ? (
-                <svg
-                  className="animate-spin h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              ) : (
-                rightIcon
+            <input
+              id={inputId}
+              ref={ref}
+              className={cn(
+                'flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:ring-0 text-[15px] text-[var(--text-primary)] font-light tracking-tight placeholder:text-[var(--text-muted)]',
+                className
               )}
-            </div>
-          )}
+              disabled={disabled || isLoading}
+              aria-invalid={error ? 'true' : 'false'}
+              aria-describedby={
+                error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined
+              }
+              {...props}
+            />
+            {(rightIcon || isLoading) && (
+              <div className="text-[var(--text-muted)] ml-3">
+                {isLoading ? (
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                ) : (
+                  rightIcon
+                )}
+              </div>
+            )}
+          </div>
         </div>
         {error && (
           <p
             id={`${inputId}-error`}
-            className="mt-1 text-sm text-[var(--danger)]"
+            className="mt-1.5 text-xs text-[var(--danger)] font-light tracking-tight"
           >
             {error}
           </p>
@@ -104,7 +107,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {helperText && !error && (
           <p
             id={`${inputId}-helper`}
-            className="mt-1 text-sm text-[var(--text-muted)]"
+            className="mt-1.5 text-xs text-[var(--text-muted)] font-light tracking-tight"
           >
             {helperText}
           </p>

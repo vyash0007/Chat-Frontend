@@ -91,10 +91,10 @@ export const LoginForm: React.FC = () => {
     <div className="w-full max-w-md space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+        <h1 className="text-3xl font-light tracking-tight text-[var(--text-primary)]">
           {step === 'phone' ? 'Welcome Back' : 'Verify Your Phone'}
         </h1>
-        <p className="mt-2 text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm font-light tracking-tight text-[var(--text-secondary)]">
           {step === 'phone'
             ? 'Enter your phone number to get started'
             : `We sent a code to ${parsePhoneNumber(phone)?.formatInternational() || phone}`}
@@ -140,7 +140,7 @@ export const LoginForm: React.FC = () => {
                 <div className="w-full border-t border-[var(--divider-color)]"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-[var(--background-primary)] text-[var(--text-muted)]">
+                <span className="px-2 bg-[var(--background-primary)] text-[var(--text-muted)] font-light tracking-tight">
                   Or continue with phone
                 </span>
               </div>
@@ -188,14 +188,14 @@ export const LoginForm: React.FC = () => {
               <button
                 onClick={handleResendOtp}
                 disabled={isLoading}
-                className="text-sm text-[var(--accent-primary)] hover:text-[var(--accent-hover)] disabled:opacity-50 transition-colors"
+                className="text-sm text-[var(--accent-primary)] hover:text-[var(--accent-hover)] disabled:opacity-50 transition-colors font-light tracking-tight"
               >
                 Didn't receive code? Resend
               </button>
               <button
                 onClick={handleBack}
                 disabled={isLoading}
-                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors"
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors font-light tracking-tight"
               >
                 ← Change phone number
               </button>
@@ -205,13 +205,13 @@ export const LoginForm: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="text-center text-sm text-[var(--text-muted)]">
+      <div className="text-center text-sm text-[var(--text-muted)] font-light tracking-tight">
         By continuing, you agree to our{' '}
-        <a href="#" className="text-[var(--accent-primary)] hover:underline">
+        <a href="#" className="text-[var(--accent-primary)] hover:underline font-light tracking-tight">
           Terms of Service
         </a>{' '}
         and{' '}
-        <a href="#" className="text-[var(--accent-primary)] hover:underline">
+        <a href="#" className="text-[var(--accent-primary)] hover:underline font-light tracking-tight">
           Privacy Policy
         </a>
       </div>
