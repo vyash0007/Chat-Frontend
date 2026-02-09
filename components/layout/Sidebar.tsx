@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Plus, UserPlus } from 'lucide-react';
 import { ChatList } from '@/components/chat/ChatList';
-import { useUIStore, useChatStore } from '@/store';
+import { CallList } from '@/components/chat/CallList';
+import { useUIStore, useChatStore, useCategoryStore } from '@/store';
 import { UserPanel } from './UserPanel';
 import { NewChatModal } from '@/components/chat/NewChatModal';
 import { NewGroupModal } from '@/components/chat/NewGroupModal';
@@ -11,6 +12,7 @@ import { NewGroupModal } from '@/components/chat/NewGroupModal';
 export const Sidebar: React.FC = () => {
   const { isMobile, setSidebarOpen, openModal } = useUIStore();
   const { activeChat } = useChatStore();
+  const { activeCategory } = useCategoryStore();
 
   return (
     <div className="h-full flex flex-col bg-[var(--background-secondary)]">
@@ -35,7 +37,11 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
       <div className="flex-1 overflow-y-auto custom-scrollbar px-3">
-        <ChatList />
+        {activeCategory === 'calls' ? (
+          <CallList />
+        ) : (
+          <ChatList />
+        )}
       </div>
 
       {/* User Panel */}

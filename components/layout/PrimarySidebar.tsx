@@ -9,7 +9,8 @@ import {
     Archive,
     User,
     Edit2,
-    LogOut
+    LogOut,
+    Phone
 } from 'lucide-react';
 import { useAuthStore, useCategoryStore, useChatStore } from '@/store';
 import { useRouter } from 'next/navigation';
@@ -90,9 +91,9 @@ export const PrimarySidebar: React.FC = () => {
                     onClick={() => setActiveCategory('friends')}
                 />
                 <SidebarItem
-                    icon={FileText}
-                    active={activeCategory === 'news'}
-                    onClick={() => setActiveCategory('news')}
+                    icon={Phone}
+                    active={activeCategory === 'calls'}
+                    onClick={() => setActiveCategory('calls')}
                 />
                 <SidebarItem
                     icon={Archive}

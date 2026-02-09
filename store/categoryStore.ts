@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type CategoryType = 'all' | 'work' | 'friends' | 'news' | 'archive';
+export type CategoryType = 'all' | 'work' | 'friends' | 'calls' | 'archive';
 
 interface CategoryState {
     activeCategory: CategoryType;
