@@ -58,6 +58,9 @@ function CallContent() {
   const [isCameraOff, setIsCameraOff] = useState(isAudioOnly);
   const [isConnecting, setIsConnecting] = useState(true);
   const [callDuration, setCallDuration] = useState(0);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const originalVideoTrackRef = useRef<MediaStreamTrack | null>(null);
 
   const socket = token ? getSocket(token) : null;
 
@@ -293,6 +296,93 @@ function CallContent() {
     });
   };
 
+  const toggleScreenShare = async () => {
+    if (isScreenSharing) {
+      // Stop screen sharing - restore camera
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(track => track.stop());
+        screenStreamRef.current = null;
+      }
+
+      // Restore original video track
+      if (originalVideoTrackRef.current && localStreamRef.current) {
+        const stream = localStreamRef.current;
+        const oldVideoTrack = stream.getVideoTracks()[0];
+        if (oldVideoTrack) {
+          stream.removeTrack(oldVideoTrack);
+        }
+        stream.addTrack(originalVideoTrackRef.current);
+
+        // Replace track in all peer connections
+        Object.values(peersRef.current).forEach(pc => {
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+          if (sender) {
+            sender.replaceTrack(originalVideoTrackRef.current);
+          }
+        });
+
+        if (localVideo.current) {
+          localVideo.current.srcObject = stream;
+        }
+      }
+
+      setIsScreenSharing(false);
+      console.log('[Call] Screen sharing stopped');
+    } else {
+      // Start screen sharing
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: 'always' } as MediaTrackConstraints,
+          audio: false,
+        });
+
+        screenStreamRef.current = screenStream;
+        const screenTrack = screenStream.getVideoTracks()[0];
+
+        // Save original video track
+        if (localStreamRef.current) {
+          const originalTrack = localStreamRef.current.getVideoTracks()[0];
+          if (originalTrack) {
+            originalVideoTrackRef.current = originalTrack;
+          }
+        }
+
+        // Replace video track in all peer connections
+        Object.values(peersRef.current).forEach(pc => {
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+          if (sender) {
+            sender.replaceTrack(screenTrack);
+          }
+        });
+
+        // Update local preview
+        if (localStreamRef.current) {
+          const oldTrack = localStreamRef.current.getVideoTracks()[0];
+          if (oldTrack) {
+            localStreamRef.current.removeTrack(oldTrack);
+          }
+          localStreamRef.current.addTrack(screenTrack);
+          if (localVideo.current) {
+            localVideo.current.srcObject = localStreamRef.current;
+          }
+        }
+
+        // Handle when user stops sharing via browser UI
+        screenTrack.onended = () => {
+          toggleScreenShare();
+        };
+
+        setIsScreenSharing(true);
+        console.log('[Call] Screen sharing started');
+      } catch (err: any) {
+        console.error('[Call] Screen share error:', err);
+        if (err.name !== 'NotAllowedError') {
+          setMediaError('Could not share screen: ' + err.message);
+        }
+      }
+    }
+  };
+
   const endCall = () => {
     // Notify server we're leaving
     if (socket) {
@@ -303,6 +393,12 @@ function CallContent() {
     // Close all peer connections
     Object.values(peersRef.current).forEach((pc) => pc.close());
     peersRef.current = {};
+
+    // Stop screen share if active
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((track) => track.stop());
+      screenStreamRef.current = null;
+    }
 
     // Stop all media tracks to release camera/mic
     if (localStreamRef.current) {
@@ -391,92 +487,146 @@ function CallContent() {
 
       {/* Main Video Grid */}
       <main className="flex-1 p-6 overflow-auto">
-        <div className={`grid gap-4 h-full ${remoteCount === 0 ? 'grid-cols-1' :
-          remoteCount === 1 ? 'grid-cols-1 lg:grid-cols-2' :
-            'grid-cols-2 lg:grid-cols-3'
-          }`}>
-          {/* Local Video */}
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 min-h-[300px] group">
-            {isAudioOnly || isCameraOff ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600/20 to-purple-600/20">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 blur-xl opacity-50" />
-                  <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl">
-                    <span className="text-4xl text-white font-bold">
-                      {user?.name?.charAt(0)?.toUpperCase() || 'Y'}
-                    </span>
-                  </div>
-                </div>
-                {isCameraOff && !isAudioOnly && (
-                  <p className="mt-4 text-white/50 text-sm">Camera off</p>
-                )}
-              </div>
-            ) : (
+        {isScreenSharing ? (
+          /* Screen Sharing Layout - Presenter View */
+          <div className="h-full flex gap-4">
+            {/* Main Screen Share View */}
+            <div className="flex-1 relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10">
               <video
                 ref={localVideo}
                 autoPlay
                 muted
                 playsInline
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-black"
               />
-            )}
-
-            {/* Label */}
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10">
-                <span className="text-white text-sm font-medium">You</span>
-              </div>
-              {isMuted && (
-                <div className="p-2 bg-red-500/80 backdrop-blur-sm rounded-xl">
+              {/* Screen Share Badge */}
+              <div className="absolute top-4 left-4 flex items-center gap-2">
+                <div className="px-4 py-2 bg-green-500/80 backdrop-blur-md rounded-xl border border-green-400/30 flex items-center gap-2">
                   <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
+                  <span className="text-white text-sm font-medium">You are sharing</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Participant Thumbnails Sidebar */}
+            <div className="w-48 flex flex-col gap-3 overflow-y-auto">
+              {/* Remote participants */}
+              {Object.entries(remoteStreams).map(([userId, stream]) => (
+                <div key={userId} className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 aspect-video">
+                  <video
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                    ref={(el) => {
+                      if (el) el.srcObject = stream;
+                    }}
+                  />
+                  <div className="absolute bottom-2 left-2">
+                    <div className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg">
+                      <span className="text-white text-xs">{userId.slice(0, 6)}...</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {remoteCount === 0 && (
+                <div className="flex items-center justify-center aspect-video rounded-2xl bg-white/5 border border-white/10">
+                  <p className="text-white/40 text-xs text-center px-2">Waiting for participants...</p>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Remote Videos */}
-          {Object.entries(remoteStreams).map(([userId, stream]) => (
-            <div key={userId} className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 min-h-[300px]">
-              <video
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-                ref={(el) => {
-                  if (el) el.srcObject = stream;
-                }}
-              />
-              <div className="absolute bottom-4 left-4">
-                <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10">
-                  <span className="text-white text-sm font-medium">User {userId.slice(0, 6)}...</span>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Waiting State */}
-          {remoteCount === 0 && (
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <div className="relative w-24 h-24 mx-auto mb-6">
-                  <div className="absolute inset-0 rounded-full bg-purple-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                  <div className="absolute inset-2 rounded-full bg-purple-500/30 animate-ping" style={{ animationDuration: '2.5s' }} />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/20 backdrop-blur-sm border border-white/10 flex items-center justify-center">
-                      <svg className="w-10 h-10 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
+        ) : (
+          /* Normal Video Grid Layout */
+          <div className={`grid gap-4 h-full ${remoteCount === 0 ? 'grid-cols-1' :
+            remoteCount === 1 ? 'grid-cols-1 lg:grid-cols-2' :
+              'grid-cols-2 lg:grid-cols-3'
+            }`}>
+            {/* Local Video */}
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 min-h-[300px] group">
+              {isAudioOnly || isCameraOff ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600/20 to-purple-600/20">
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 blur-xl opacity-50" />
+                    <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl">
+                      <span className="text-4xl text-white font-bold">
+                        {user?.name?.charAt(0)?.toUpperCase() || 'Y'}
+                      </span>
                     </div>
                   </div>
+                  {isCameraOff && !isAudioOnly && (
+                    <p className="mt-4 text-white/50 text-sm">Camera off</p>
+                  )}
                 </div>
-                <p className="text-white/60 text-lg font-medium">Waiting for others to join...</p>
-                <p className="text-white/40 text-sm mt-2">Share this call to invite participants</p>
+              ) : (
+                <video
+                  ref={localVideo}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              )}
+
+              {/* Label */}
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10">
+                  <span className="text-white text-sm font-medium">You</span>
+                </div>
+                {isMuted && (
+                  <div className="p-2 bg-red-500/80 backdrop-blur-sm rounded-xl">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                    </svg>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Remote Videos */}
+            {Object.entries(remoteStreams).map(([userId, stream]) => (
+              <div key={userId} className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 min-h-[300px]">
+                <video
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                  ref={(el) => {
+                    if (el) el.srcObject = stream;
+                  }}
+                />
+                <div className="absolute bottom-4 left-4">
+                  <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10">
+                    <span className="text-white text-sm font-medium">User {userId.slice(0, 6)}...</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Waiting State */}
+            {remoteCount === 0 && (
+              <div className="flex items-center justify-center">
+                <div className="text-center">
+                  <div className="relative w-24 h-24 mx-auto mb-6">
+                    <div className="absolute inset-0 rounded-full bg-purple-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                    <div className="absolute inset-2 rounded-full bg-purple-500/30 animate-ping" style={{ animationDuration: '2.5s' }} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/20 backdrop-blur-sm border border-white/10 flex items-center justify-center">
+                        <svg className="w-10 h-10 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-white/60 text-lg font-medium">Waiting for others to join...</p>
+                  <p className="text-white/40 text-sm mt-2">Share this call to invite participants</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Control Bar with glassmorphism */}
@@ -527,10 +677,14 @@ function CallContent() {
               </button>
             )}
 
-            {/* Screen Share Button (placeholder) */}
+            {/* Screen Share Button */}
             <button
-              className="group relative p-4 rounded-2xl bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
-              title="Share screen (coming soon)"
+              onClick={toggleScreenShare}
+              className={`group relative p-4 rounded-2xl transition-all duration-300 ${isScreenSharing
+                ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 hover:bg-green-600'
+                : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
