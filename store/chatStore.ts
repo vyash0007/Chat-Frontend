@@ -15,7 +15,7 @@ interface ChatState {
   // Actions
   fetchChats: () => Promise<void>;
   fetchMessages: (chatId: string) => Promise<void>;
-  setActiveChat: (chatId: string) => void;
+  setActiveChat: (chatId: string) => Promise<void>;
   sendMessage: (payload: SendMessagePayload) => void;
   addMessage: (message: Message) => void;
   updateMessageStatus: (messageId: string, status: MessageStatus) => void;
@@ -151,9 +151,17 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     }
   },
 
-  setActiveChat: (chatId: string) => {
-    const { chats } = get();
-    const chat = chats.find(c => c.id === chatId);
+  setActiveChat: async (chatId: string) => {
+    const { chats, fetchChats } = get();
+    let chat = chats.find(c => c.id === chatId);
+
+    // If chat not found, try fetching chats first
+    if (!chat && chats.length === 0) {
+      await fetchChats();
+      const { chats: updatedChats } = get();
+      chat = updatedChats.find(c => c.id === chatId);
+    }
+
     if (chat) {
       set({ activeChat: chat });
     }

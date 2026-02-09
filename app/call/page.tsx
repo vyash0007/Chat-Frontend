@@ -348,19 +348,26 @@ function CallContent() {
   const toggleMute = () => {
     const stream = localStreamRef.current;
     if (!stream) return;
+    const newMutedState = !isMuted;
     stream.getAudioTracks().forEach((track) => {
-      track.enabled = !track.enabled;
-      setIsMuted(!track.enabled);
+      track.enabled = !newMutedState; // enabled is opposite of muted
     });
+    setIsMuted(newMutedState);
   };
 
   const toggleCamera = () => {
     const stream = localStreamRef.current;
     if (!stream) return;
-    stream.getVideoTracks().forEach((track) => {
-      track.enabled = !track.enabled;
-      setIsCameraOff(!track.enabled);
+    const videoTracks = stream.getVideoTracks();
+    if (videoTracks.length === 0) {
+      console.warn('[Call] No video tracks to toggle');
+      return;
+    }
+    const newCameraOffState = !isCameraOff;
+    videoTracks.forEach((track) => {
+      track.enabled = !newCameraOffState; // enabled is opposite of cameraOff
     });
+    setIsCameraOff(newCameraOffState);
   };
 
   const toggleScreenShare = async () => {
