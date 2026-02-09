@@ -17,11 +17,11 @@ export const metadata: Metadata = {
   description: "A state-of-the-art chat experience with real-time messaging and rich media sharing.",
   icons: {
     icon: [
-      { url: "/favicon.ico", type: "image/x-icon" },
-      { url: "/favicon.png", type: "image/png" },
+      { url: "/favicon.ico?v=2", type: "image/x-icon" },
+      { url: "/favicon.png?v=2", type: "image/png" },
     ],
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    shortcut: "/favicon.png?v=2",
+    apple: "/favicon.png?v=2",
   },
 };
 
