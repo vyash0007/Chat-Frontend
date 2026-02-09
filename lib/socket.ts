@@ -2,6 +2,15 @@ import { io, Socket } from 'socket.io-client';
 import { WS_URL } from './constants';
 
 let socket: Socket | null = null;
+let pendingOperations: Array<() => void> = [];
+
+// Execute any pending operations once socket connects
+const flushPendingOperations = () => {
+  if (socket && socket.connected) {
+    pendingOperations.forEach(op => op());
+    pendingOperations = [];
+  }
+};
 
 export const getSocket = (token?: string): Socket | null => {
   if (!socket && token) {
@@ -9,6 +18,11 @@ export const getSocket = (token?: string): Socket | null => {
       auth: { token },
       transports: ['websocket'],
       autoConnect: true,
+    });
+
+    // Flush pending operations when socket connects
+    socket.on('connect', () => {
+      flushPendingOperations();
     });
   }
   return socket;
@@ -18,15 +32,26 @@ export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();
     socket = null;
+    pendingOperations = [];
   }
 };
 
 export const joinChat = (chatId: string) => {
+  const doJoinChat = () => {
+    if (socket && socket.connected) {
+      console.log('📍 Joining chat:', chatId);
+      socket.emit('joinChat', { chatId });
+    }
+  };
+
   if (socket && socket.connected) {
-    console.log('📍 Joining chat:', chatId);
-    socket.emit('joinChat', { chatId });
+    doJoinChat();
+  } else if (socket) {
+    // Socket exists but not connected yet - queue the operation
+    console.log('⏳ Queueing joinChat for:', chatId);
+    pendingOperations.push(doJoinChat);
   } else {
-    console.warn('Socket not connected, cannot join chat:', chatId);
+    console.warn('Socket not initialized, cannot join chat:', chatId);
   }
 };
 
