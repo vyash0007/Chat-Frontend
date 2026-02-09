@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { SearchUsersModal } from '@/components/chat/SearchUsersModal';
+import { IncomingCallModal, OutgoingCallModal } from '@/components/call';
 import { useAuthStore, useUIStore } from '@/store';
 import { useSocket } from '@/hooks';
 
@@ -86,6 +87,10 @@ export default function DashboardLayout({
 
       {/* Modals */}
       <SearchUsersModal />
+
+      {/* Call Modals - Rendered globally */}
+      <IncomingCallModal />
+      <OutgoingCallModal />
     </div>
   );
 }

@@ -49,3 +49,34 @@ export const emitStopTyping = (chatId: string) => {
   }
 };
 
+// ========== CALL SOCKET METHODS ==========
+
+export const initiateCall = (chatId: string, isVideoCall: boolean) => {
+  if (socket && socket.connected) {
+    console.log('📞 Initiating call:', { chatId, isVideoCall });
+    socket.emit('initiateCall', { chatId, isVideoCall });
+  } else {
+    console.warn('Socket not connected, cannot initiate call');
+  }
+};
+
+export const acceptCall = (chatId: string, callerId: string) => {
+  if (socket && socket.connected) {
+    console.log('✅ Accepting call:', { chatId, callerId });
+    socket.emit('acceptCall', { chatId, callerId });
+  }
+};
+
+export const rejectCall = (chatId: string, callerId: string) => {
+  if (socket && socket.connected) {
+    console.log('❌ Rejecting call:', { chatId, callerId });
+    socket.emit('rejectCall', { chatId, callerId });
+  }
+};
+
+export const cancelCall = (chatId: string) => {
+  if (socket && socket.connected) {
+    console.log('🚫 Cancelling call:', { chatId });
+    socket.emit('cancelCall', { chatId });
+  }
+};

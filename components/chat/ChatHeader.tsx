@@ -4,9 +4,10 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserAvatar } from '@/components/user';
 import { Chat } from '@/types';
-import { useUIStore, useAuthStore, useUserStore } from '@/store';
+import { useUIStore, useAuthStore, useUserStore, useCallStore } from '@/store';
 import { InviteModal } from './InviteModal';
 import { cn } from '@/lib/utils';
+import { initiateCall } from '@/lib/socket';
 
 interface ChatHeaderProps {
   chat: Chat | null;
@@ -16,6 +17,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
   const router = useRouter();
   const { isMobile, setSidebarOpen } = useUIStore();
   const { user: currentUser } = useAuthStore();
+  const { setOutgoingCall } = useCallStore();
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   // For 1-on-1 chats, find the OTHER user (not the current user)
@@ -36,11 +38,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
   if (!chat) return null;
 
   const handleVideoCall = () => {
-    router.push(`/call?chatId=${chat.id}`);
+    initiateCall(chat.id, true);
+    setOutgoingCall({ chatId: chat.id, isVideoCall: true, status: 'ringing' });
   };
 
   const handleAudioCall = () => {
-    router.push(`/call?chatId=${chat.id}&audio=true`);
+    initiateCall(chat.id, false);
+    setOutgoingCall({ chatId: chat.id, isVideoCall: false, status: 'ringing' });
   };
 
   // Action button component for DRY code

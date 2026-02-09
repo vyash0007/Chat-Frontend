@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
-import { useAuthStore, useChatStore, useUserStore } from '@/store';
+import { useAuthStore, useChatStore, useUserStore, useCallStore, IncomingCall } from '@/store';
 import { Message, TypingStatus, MessageStatus } from '@/types';
-import { getSocket, joinChat, leaveChat, emitTyping, emitStopTyping, disconnectSocket } from '@/lib/socket';
+import { getSocket, joinChat, leaveChat, emitTyping, emitStopTyping, disconnectSocket, initiateCall, acceptCall, rejectCall, cancelCall } from '@/lib/socket';
 
 // This hook should only be called ONCE in the layout component.
 // For joinChat/leaveChat/emitTyping, import directly from '@/lib/socket'.
@@ -86,6 +86,32 @@ export const useSocket = () => {
       }
     });
 
+    // ========== CALL EVENTS ==========
+
+    socket.on('incomingCall', (data: IncomingCall) => {
+      console.log('📞 Incoming call:', data);
+      useCallStore.getState().setIncomingCall(data);
+    });
+
+    socket.on('callAccepted', (data: { chatId: string; acceptedBy: string }) => {
+      console.log('✅ Call accepted:', data);
+      useCallStore.getState().updateOutgoingCallStatus('accepted');
+    });
+
+    socket.on('callRejected', (data: { chatId: string; rejectedBy: string }) => {
+      console.log('❌ Call rejected:', data);
+      useCallStore.getState().updateOutgoingCallStatus('rejected');
+      // Clear outgoing call after a brief delay to show the rejected status
+      setTimeout(() => {
+        useCallStore.getState().setOutgoingCall(null);
+      }, 2000);
+    });
+
+    socket.on('callCancelled', (data: { chatId: string; cancelledBy: string }) => {
+      console.log('🚫 Call cancelled:', data);
+      useCallStore.getState().setIncomingCall(null);
+    });
+
     // No cleanup - this hook runs once for the lifetime of the app
     // Socket disconnection happens on logout via disconnectSocket()
   }, [token]);
@@ -101,5 +127,9 @@ export const useSocket = () => {
     emitTyping,
     emitStopTyping,
     disconnectSocket,
+    initiateCall,
+    acceptCall,
+    rejectCall,
+    cancelCall,
   } as const;
 };
