@@ -61,6 +61,7 @@ function CallContent() {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const originalVideoTrackRef = useRef<MediaStreamTrack | null>(null);
+  const screenVideoRef = useRef<HTMLVideoElement>(null);
 
   const socket = token ? getSocket(token) : null;
 
@@ -197,22 +198,13 @@ function CallContent() {
             console.log('[Call] Ignoring offer collision - we are impolite peer');
             return;
           }
-          // We're polite - need to rollback our offer first
+          // We're polite - need to rollback our offer first, then set remote
           console.log('[Call] Rolling back local offer - we are polite peer');
-          await Promise.all([
-            pc.setLocalDescription({ type: 'rollback' }),
-            pc.setRemoteDescription(offer)
-          ]);
-        } else {
-          // Normal case - stable state, just set remote description
-          await pc.setRemoteDescription(offer);
+          await pc.setLocalDescription({ type: 'rollback' });
         }
 
-        // Now we should be in have-remote-offer state
-        if (pc.signalingState !== 'have-remote-offer') {
-          console.error('[Call] Unexpected state after setRemoteDescription:', pc.signalingState);
-          return;
-        }
+        // Make sure we're in stable state before setting remote description
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
@@ -305,24 +297,28 @@ function CallContent() {
       }
 
       // Restore original video track
-      if (originalVideoTrackRef.current && localStreamRef.current) {
-        const stream = localStreamRef.current;
-        const oldVideoTrack = stream.getVideoTracks()[0];
-        if (oldVideoTrack) {
-          stream.removeTrack(oldVideoTrack);
-        }
-        stream.addTrack(originalVideoTrackRef.current);
-
+      if (originalVideoTrackRef.current) {
         // Replace track in all peer connections
-        Object.values(peersRef.current).forEach(pc => {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+        for (const pc of Object.values(peersRef.current)) {
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video' || !s.track);
           if (sender) {
-            sender.replaceTrack(originalVideoTrackRef.current);
+            try {
+              await sender.replaceTrack(originalVideoTrackRef.current);
+              console.log('[Call] Restored camera track in peer connection');
+            } catch (err) {
+              console.error('[Call] Error restoring camera track:', err);
+            }
           }
-        });
+        }
 
-        if (localVideo.current) {
-          localVideo.current.srcObject = stream;
+        // Update local stream
+        if (localStreamRef.current) {
+          const stream = localStreamRef.current;
+          stream.getVideoTracks().forEach(t => stream.removeTrack(t));
+          stream.addTrack(originalVideoTrackRef.current);
+          if (localVideo.current) {
+            localVideo.current.srcObject = stream;
+          }
         }
       }
 
@@ -332,43 +328,51 @@ function CallContent() {
       // Start screen sharing
       try {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { cursor: 'always' } as MediaTrackConstraints,
+          video: {
+            cursor: 'always',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          } as MediaTrackConstraints,
           audio: false,
         });
 
         screenStreamRef.current = screenStream;
         const screenTrack = screenStream.getVideoTracks()[0];
+        console.log('[Call] Got screen track:', screenTrack.label);
 
         // Save original video track
         if (localStreamRef.current) {
           const originalTrack = localStreamRef.current.getVideoTracks()[0];
           if (originalTrack) {
             originalVideoTrackRef.current = originalTrack;
+            console.log('[Call] Saved original camera track');
           }
         }
 
         // Replace video track in all peer connections
-        Object.values(peersRef.current).forEach(pc => {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-          if (sender) {
-            sender.replaceTrack(screenTrack);
+        for (const [userId, pc] of Object.entries(peersRef.current)) {
+          const senders = pc.getSenders();
+          const videoSender = senders.find(s => s.track?.kind === 'video');
+          if (videoSender) {
+            try {
+              await videoSender.replaceTrack(screenTrack);
+              console.log('[Call] Replaced video track for peer:', userId);
+            } catch (err) {
+              console.error('[Call] Error replacing track for peer:', userId, err);
+            }
+          } else {
+            console.warn('[Call] No video sender found for peer:', userId);
           }
-        });
+        }
 
-        // Update local preview
-        if (localStreamRef.current) {
-          const oldTrack = localStreamRef.current.getVideoTracks()[0];
-          if (oldTrack) {
-            localStreamRef.current.removeTrack(oldTrack);
-          }
-          localStreamRef.current.addTrack(screenTrack);
-          if (localVideo.current) {
-            localVideo.current.srcObject = localStreamRef.current;
-          }
+        // Update local preview - show screen share in dedicated element
+        if (screenVideoRef.current) {
+          screenVideoRef.current.srcObject = screenStream;
         }
 
         // Handle when user stops sharing via browser UI
         screenTrack.onended = () => {
+          console.log('[Call] Screen track ended via browser UI');
           toggleScreenShare();
         };
 
@@ -491,13 +495,13 @@ function CallContent() {
           /* Screen Sharing Layout - Presenter View */
           <div className="h-full flex gap-4">
             {/* Main Screen Share View */}
-            <div className="flex-1 relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10">
+            <div className="flex-1 relative rounded-3xl overflow-hidden bg-black border border-white/10">
               <video
-                ref={localVideo}
+                ref={screenVideoRef}
                 autoPlay
                 muted
                 playsInline
-                className="w-full h-full object-contain bg-black"
+                className="w-full h-full object-contain"
               />
               {/* Screen Share Badge */}
               <div className="absolute top-4 left-4 flex items-center gap-2">
@@ -511,7 +515,23 @@ function CallContent() {
             </div>
 
             {/* Participant Thumbnails Sidebar */}
-            <div className="w-48 flex flex-col gap-3 overflow-y-auto">
+            <div className="w-52 flex flex-col gap-3 overflow-y-auto">
+              {/* Your camera (self-view while sharing) */}
+              <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-emerald-500/30 aspect-video">
+                <video
+                  ref={localVideo}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-2 left-2">
+                  <div className="px-2 py-1 bg-emerald-500/70 backdrop-blur-sm rounded-lg">
+                    <span className="text-white text-xs font-medium">You (camera)</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Remote participants */}
               {Object.entries(remoteStreams).map(([userId, stream]) => (
                 <div key={userId} className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-white/10 aspect-video">
