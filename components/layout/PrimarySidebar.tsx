@@ -30,15 +30,15 @@ const SidebarItem = ({
     <button
         onClick={onClick}
         className={cn(
-            'relative flex items-center justify-center w-12 h-12 mb-4 rounded-sm cursor-pointer transition-all duration-200',
+            'relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 mb-2 md:mb-4 rounded-sm cursor-pointer transition-all duration-200',
             active
                 ? 'bg-[var(--accent-primary)] text-white shadow-glow'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--background-hover)]'
         )}
     >
-        <Icon size={22} strokeWidth={1.5} />
+        <Icon className="w-5 h-5 md:w-[22px] md:h-[22px]" strokeWidth={1.5} />
         {badge && (
-            <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 -mt-1 -mr-1 text-[10px] font-light tracking-tighter text-white bg-[var(--danger)] rounded-full border-2 border-[var(--background-primary)]">
+            <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 md:w-5 md:h-5 -mt-1 -mr-1 text-[9px] md:text-[10px] font-light tracking-tighter text-white bg-[var(--danger)] rounded-full border-2 border-[var(--background-primary)]">
                 {badge}
             </span>
         )}
@@ -61,12 +61,12 @@ export const PrimarySidebar: React.FC = () => {
     return (
         <div className="w-full h-full flex flex-col items-center">
             {/* Logo */}
-            <div className="mb-8">
+            <div className="mb-4 md:mb-8">
                 <div
-                    className="w-10 h-10 bg-[var(--accent-primary)]/10 rounded-sm flex items-center justify-center cursor-pointer hover:bg-[var(--accent-primary)]/20 transition-colors"
+                    className="w-8 h-8 md:w-10 md:h-10 bg-[var(--accent-primary)]/10 rounded-sm flex items-center justify-center cursor-pointer hover:bg-[var(--accent-primary)]/20 transition-colors"
                     onClick={() => router.push('/chats')}
                 >
-                    <svg className="text-[var(--accent-primary)]" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="text-[var(--accent-primary)] w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" />
                     </svg>
                 </div>

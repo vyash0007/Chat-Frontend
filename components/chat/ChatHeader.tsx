@@ -51,17 +51,17 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
 
   return (
     <>
-      <header className="h-[72px] flex items-center justify-between px-6 bg-[var(--background-secondary)] border-b border-[var(--border-color)] sticky top-0 z-[var(--z-header)]">
+      <header className="h-[64px] md:h-[72px] flex items-center justify-between px-4 md:px-6 bg-[var(--background-secondary)] border-b border-[var(--border-color)] sticky top-0 z-[var(--z-header)]">
         {/* Left Section - Mobile Menu + Chat Info */}
-        <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1 mr-2">
           {/* Mobile menu button */}
           {isMobile && (
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 -ml-2 rounded-md hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors flex-shrink-0"
+              className="p-1.5 -ml-1 rounded-md hover:bg-[var(--background-hover)] text-[var(--text-primary)] transition-colors flex-shrink-0"
               aria-label="Open sidebar"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -69,8 +69,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
 
           {/* Chat Info */}
           <div className="flex flex-col min-w-0">
-            <h2 className="text-xl font-light tracking-tight text-[var(--text-primary)]">{displayName}</h2>
-            <p className="text-sm font-light tracking-tight text-[var(--text-secondary)]">
+            <h2 className="text-lg md:text-xl font-light tracking-tight text-[var(--text-primary)] truncate">{displayName}</h2>
+            <p className="text-[12px] md:text-sm font-light tracking-tight text-[var(--text-secondary)] truncate">
               {chat.isGroup ? (
                 <>
                   {chat.users?.length || 0} members, {
@@ -85,35 +85,35 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ chat }) => {
         </div>
 
         {/* Right Section - Action Buttons */}
-        <div className="flex items-center space-x-6 text-gray-400">
+        <div className="flex items-center space-x-4 md:space-x-6 text-gray-400 flex-shrink-0">
           <button
             onClick={handleVideoCall}
-            className="cursor-pointer hover:text-[#7c5dfa] transition-colors"
+            className="cursor-pointer hover:text-[#7c5dfa] transition-colors p-1"
             aria-label="Video call"
             title="Start video call"
           >
-            <FaVideo className="w-5.5 h-5.5" />
+            <FaVideo className="w-4.5 h-4.5 md:w-5.5 md:h-5.5" />
           </button>
 
           <button
             onClick={handleAudioCall}
-            className="cursor-pointer hover:text-[#7c5dfa] transition-colors"
+            className="cursor-pointer hover:text-[#7c5dfa] transition-colors p-1"
             aria-label="Audio call"
             title="Start voice call"
           >
-            <MdCall className="w-6 h-6" />
+            <MdCall className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
           {chat.isGroup && (
             <button
               onClick={toggleGroupInfoPanel}
               className={cn(
-                "cursor-pointer transition-colors",
+                "cursor-pointer transition-colors p-1",
                 groupInfoPanelOpen ? "text-[#7c5dfa]" : "hover:text-gray-600"
               )}
               aria-label="Group info"
             >
-              <svg className="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4.5 h-4.5 md:w-5.5 md:h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
             </button>

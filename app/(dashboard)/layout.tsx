@@ -64,7 +64,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--background-primary)]">
       {/* 1. Primary Sidebar (Slim Icon Bar - Dark) */}
-      <div className="w-[90px] bg-[#1e1f25] flex flex-col items-center py-8 shrink-0">
+      <div className="w-16 md:w-[90px] bg-[#1e1f25] flex flex-col items-center py-4 md:py-8 shrink-0 transition-all duration-300">
         <PrimarySidebar />
       </div>
 

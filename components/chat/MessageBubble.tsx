@@ -125,7 +125,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   return (
     <div
       className={cn(
-        'flex items-end gap-3 mb-2 px-6 animate-fade-in-up',
+        'flex items-end gap-2 md:gap-3 mb-2 px-3 md:px-6 animate-fade-in-up',
         isSent ? 'flex-row-reverse' : 'flex-row'
       )}
     >
@@ -134,12 +134,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         <UserAvatar
           user={message.sender}
           size="sm"
-          className="flex-shrink-0 mb-1"
+          className="flex-shrink-0 mb-1 scale-90 md:scale-100 origin-bottom-left"
         />
       )}
 
       {/* Message Bubble */}
-      <div className="flex flex-col gap-1 max-w-[80%] sm:max-w-[70%]">
+      <div className="flex flex-col gap-1 max-w-[85%] sm:max-w-[70%]">
         {/* Sender name for group chats */}
         {!isSent && message.sender && (
           <span className="text-xs font-light tracking-tight text-[var(--text-secondary)] ml-1">
