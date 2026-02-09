@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState, useCallback } from 'react';
+import { Suspense, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket';
 import { useAuthStore } from '@/store';
+import { useChatStore } from '@/store/chatStore';
 import { API_URL } from '@/lib/constants';
 
 const FALLBACK_ICE_SERVERS: RTCConfiguration = {
@@ -62,6 +63,29 @@ function CallContent() {
   const screenStreamRef = useRef<MediaStream | null>(null);
   const originalVideoTrackRef = useRef<MediaStreamTrack | null>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);
+  const offerProcessingRef = useRef<Set<string>>(new Set());
+
+  // Get chat data for participant names
+  const { chats, fetchChats } = useChatStore();
+
+  // Build a mapping of userId to name
+  const participantNames = useMemo(() => {
+    const nameMap: Record<string, string> = {};
+    const chat = chats.find(c => c.id === chatId);
+    if (chat?.users) {
+      chat.users.forEach(u => {
+        if (u.id && u.name) {
+          nameMap[u.id] = u.name;
+        }
+      });
+    }
+    return nameMap;
+  }, [chats, chatId]);
+
+  // Helper to get display name
+  const getDisplayName = useCallback((userId: string) => {
+    return participantNames[userId] || `User ${userId.slice(0, 6)}`;
+  }, [participantNames]);
 
   const socket = token ? getSocket(token) : null;
 
@@ -181,6 +205,17 @@ function CallContent() {
     });
 
     socket.on('offer', async ({ fromUserId, offer }: { fromUserId: string; offer: any }) => {
+      // Prevent duplicate offer processing
+      const offerKey = `${fromUserId}-${offer.sdp?.slice(0, 50)}`;
+      if (offerProcessingRef.current.has(offerKey)) {
+        console.log('[Call] Skipping duplicate offer from:', fromUserId);
+        return;
+      }
+      offerProcessingRef.current.add(offerKey);
+
+      // Clean up old offer keys after 5 seconds
+      setTimeout(() => offerProcessingRef.current.delete(offerKey), 5000);
+
       const pc = createPeerConnection(fromUserId);
       if (!pc) return;
 
@@ -188,24 +223,31 @@ function CallContent() {
 
       try {
         // Handle "glare" - when both peers send offers simultaneously
-        // Use lexicographic comparison of user IDs to consistently determine roles
         const isPolite = user?.id && user.id > fromUserId;
 
-        // Check if we're not in a state to accept an offer
-        if (pc.signalingState !== 'stable') {
+        // Check signaling state
+        if (pc.signalingState === 'have-remote-offer') {
+          // Already have an offer, skip
+          console.log('[Call] Already have remote offer, skipping');
+          return;
+        }
+
+        if (pc.signalingState === 'have-local-offer') {
           if (!isPolite) {
-            // We're impolite - ignore the incoming offer, our offer takes precedence
             console.log('[Call] Ignoring offer collision - we are impolite peer');
             return;
           }
-          // We're polite - need to rollback our offer first, then set remote
           console.log('[Call] Rolling back local offer - we are polite peer');
           await pc.setLocalDescription({ type: 'rollback' });
         }
 
-        // Make sure we're in stable state before setting remote description
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        // Now we should be in stable state
+        if (pc.signalingState !== 'stable') {
+          console.warn('[Call] Cannot process offer in state:', pc.signalingState);
+          return;
+        }
 
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('answer', { chatId, targetUserId: fromUserId, answer });
@@ -270,6 +312,21 @@ function CallContent() {
     };
   }, [createPeerConnection, socket, chatId, isAudioOnly]);
 
+  // Bind screen stream to video element when screen sharing starts
+  useEffect(() => {
+    if (isScreenSharing && screenStreamRef.current && screenVideoRef.current) {
+      console.log('[Call] Binding screen stream to video element');
+      screenVideoRef.current.srcObject = screenStreamRef.current;
+    }
+  }, [isScreenSharing]);
+
+  // Fetch chats to get participant names
+  useEffect(() => {
+    if (chats.length === 0) {
+      fetchChats();
+    }
+  }, [chats.length, fetchChats]);
+
   const toggleMute = () => {
     const stream = localStreamRef.current;
     if (!stream) return;
@@ -298,7 +355,6 @@ function CallContent() {
 
       // Restore original video track
       if (originalVideoTrackRef.current) {
-        // Replace track in all peer connections
         for (const pc of Object.values(peersRef.current)) {
           const sender = pc.getSenders().find(s => s.track?.kind === 'video' || !s.track);
           if (sender) {
@@ -311,7 +367,6 @@ function CallContent() {
           }
         }
 
-        // Update local stream
         if (localStreamRef.current) {
           const stream = localStreamRef.current;
           stream.getVideoTracks().forEach(t => stream.removeTrack(t));
@@ -365,17 +420,13 @@ function CallContent() {
           }
         }
 
-        // Update local preview - show screen share in dedicated element
-        if (screenVideoRef.current) {
-          screenVideoRef.current.srcObject = screenStream;
-        }
-
         // Handle when user stops sharing via browser UI
         screenTrack.onended = () => {
           console.log('[Call] Screen track ended via browser UI');
           toggleScreenShare();
         };
 
+        // Set state first - the useEffect will update the video element
         setIsScreenSharing(true);
         console.log('[Call] Screen sharing started');
       } catch (err: any) {
@@ -540,7 +591,7 @@ function CallContent() {
                     }}
                   />
                   <div className="absolute bottom-1.5 left-1.5">
-                    <span className="px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded">{userId.slice(0, 6)}</span>
+                    <span className="px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded">{getDisplayName(userId)}</span>
                   </div>
                 </div>
               ))}
@@ -649,7 +700,7 @@ function CallContent() {
                       }}
                     />
                     <div className="absolute bottom-2 left-2">
-                      <span className="px-2 py-0.5 bg-black/50 text-white text-xs rounded">{userId.slice(0, 8)}</span>
+                      <span className="px-2 py-0.5 bg-black/50 text-white text-xs rounded">{getDisplayName(userId)}</span>
                     </div>
                   </div>
                 ))}
