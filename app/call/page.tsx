@@ -180,30 +180,41 @@ function CallContent() {
       const pc = createPeerConnection(fromUserId);
       if (!pc) return;
 
+      console.log('[Call] Received offer from:', fromUserId, 'state:', pc.signalingState);
+
       try {
         // Handle "glare" - when both peers send offers simultaneously
-        // We need to determine who is the "polite" peer (will rollback)
         // Use lexicographic comparison of user IDs to consistently determine roles
         const isPolite = user?.id && user.id > fromUserId;
 
-        // Collision happens when we're not in stable state (we might have sent our own offer)
-        const offerCollision = pc.signalingState !== 'stable';
-
-        if (offerCollision) {
+        // Check if we're not in a state to accept an offer
+        if (pc.signalingState !== 'stable') {
           if (!isPolite) {
             // We're impolite - ignore the incoming offer, our offer takes precedence
             console.log('[Call] Ignoring offer collision - we are impolite peer');
             return;
           }
-          // We're polite - rollback our offer and accept the incoming one
+          // We're polite - need to rollback our offer first
           console.log('[Call] Rolling back local offer - we are polite peer');
-          await pc.setLocalDescription({ type: 'rollback' });
+          await Promise.all([
+            pc.setLocalDescription({ type: 'rollback' }),
+            pc.setRemoteDescription(offer)
+          ]);
+        } else {
+          // Normal case - stable state, just set remote description
+          await pc.setRemoteDescription(offer);
         }
 
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        // Now we should be in have-remote-offer state
+        if (pc.signalingState !== 'have-remote-offer') {
+          console.error('[Call] Unexpected state after setRemoteDescription:', pc.signalingState);
+          return;
+        }
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('answer', { chatId, targetUserId: fromUserId, answer });
+        console.log('[Call] Sent answer to:', fromUserId);
       } catch (err) {
         console.error('[Call] Error handling offer:', err);
       }
