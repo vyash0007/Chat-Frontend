@@ -162,9 +162,13 @@ function CallContent() {
       for (const userId of userIds) {
         const pc = createPeerConnection(userId);
         if (!pc) continue;
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('offer', { chatId, targetUserId: userId, offer });
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('offer', { chatId, targetUserId: userId, offer });
+        } catch (err) {
+          console.error('[Call] Error creating offer:', err);
+        }
       }
     });
 
@@ -176,14 +180,27 @@ function CallContent() {
       const pc = createPeerConnection(fromUserId);
       if (!pc) return;
 
-      // Only process offer if we're in a stable state
-      if (pc.signalingState !== 'stable') {
-        console.warn('[Call] Ignoring offer - connection not in stable state:', pc.signalingState);
-        return;
-      }
-
       try {
-        await pc.setRemoteDescription(offer);
+        // Handle "glare" - when both peers send offers simultaneously
+        // We need to determine who is the "polite" peer (will rollback)
+        // Use lexicographic comparison of user IDs to consistently determine roles
+        const isPolite = user?.id && user.id > fromUserId;
+
+        // Collision happens when we're not in stable state (we might have sent our own offer)
+        const offerCollision = pc.signalingState !== 'stable';
+
+        if (offerCollision) {
+          if (!isPolite) {
+            // We're impolite - ignore the incoming offer, our offer takes precedence
+            console.log('[Call] Ignoring offer collision - we are impolite peer');
+            return;
+          }
+          // We're polite - rollback our offer and accept the incoming one
+          console.log('[Call] Rolling back local offer - we are polite peer');
+          await pc.setLocalDescription({ type: 'rollback' });
+        }
+
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('answer', { chatId, targetUserId: fromUserId, answer });
@@ -196,14 +213,13 @@ function CallContent() {
       const pc = peersRef.current[fromUserId];
       if (!pc) return;
 
-      // Only set remote description if we're waiting for an answer
-      if (pc.signalingState !== 'have-local-offer') {
-        console.warn('[Call] Ignoring answer - not waiting for answer:', pc.signalingState);
-        return;
-      }
-
       try {
-        await pc.setRemoteDescription(answer);
+        // Only set remote description if we're waiting for an answer
+        if (pc.signalingState !== 'have-local-offer') {
+          console.warn('[Call] Ignoring answer - not waiting for answer:', pc.signalingState);
+          return;
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
       } catch (err) {
         console.error('[Call] Error handling answer:', err);
       }
@@ -310,8 +326,8 @@ function CallContent() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div className={`relative flex items-center justify-center w-10 h-10 rounded-xl ${isConnecting
-                ? 'bg-amber-500/20'
-                : 'bg-emerald-500/20'
+              ? 'bg-amber-500/20'
+              : 'bg-emerald-500/20'
               }`}>
               {isAudioOnly ? (
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
