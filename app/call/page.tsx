@@ -7,6 +7,30 @@ import { useAuthStore } from '@/store';
 import { useChatStore } from '@/store/chatStore';
 import { API_URL } from '@/lib/constants';
 
+// Stable component for video stream to prevent jittering
+const VideoStream = ({ stream, muted, className, ...props }: { stream: MediaStream | null; muted?: boolean; className?: string;[key: string]: any }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      if (videoRef.current.srcObject !== stream) {
+        videoRef.current.srcObject = stream;
+      }
+    }
+  }, [stream]);
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      muted={muted}
+      className={className}
+      {...props}
+    />
+  );
+};
+
 const FALLBACK_ICE_SERVERS: RTCConfiguration = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
 };
@@ -48,12 +72,13 @@ function CallContent() {
   const chatId = searchParams.get('chatId') || '';
   const isAudioOnly = searchParams.get('audio') === 'true';
 
-  const localVideo = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const iceConfigRef = useRef<RTCConfiguration>(FALLBACK_ICE_SERVERS);
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
+  const offerProcessingRef = useRef<Set<string>>(new Set());
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(isAudioOnly);
@@ -63,8 +88,6 @@ function CallContent() {
   const [remoteScreenShareUserId, setRemoteScreenShareUserId] = useState<string | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const originalVideoTrackRef = useRef<MediaStreamTrack | null>(null);
-  const screenVideoRef = useRef<HTMLVideoElement>(null);
-  const offerProcessingRef = useRef<Set<string>>(new Set());
 
   // Get chat data for participant names
   const { chats, fetchChats } = useChatStore();
@@ -173,7 +196,7 @@ function CallContent() {
       .getUserMedia(mediaConstraints)
       .then((stream) => {
         localStreamRef.current = stream;
-        if (localVideo.current) localVideo.current.srcObject = stream;
+        setLocalStream(stream);
         socket.emit('joinCall', { chatId });
       })
       .catch((err) => {
@@ -330,13 +353,7 @@ function CallContent() {
     };
   }, [createPeerConnection, socket, chatId, isAudioOnly]);
 
-  // Bind screen stream to video element when screen sharing starts
-  useEffect(() => {
-    if (isScreenSharing && screenStreamRef.current && screenVideoRef.current) {
-      console.log('[Call] Binding screen stream to video element');
-      screenVideoRef.current.srcObject = screenStreamRef.current;
-    }
-  }, [isScreenSharing]);
+  // No longer need these individual binding effects as VideoStream handles it
 
   // Fetch chats to get participant names
   useEffect(() => {
@@ -344,6 +361,9 @@ function CallContent() {
       fetchChats();
     }
   }, [chats.length, fetchChats]);
+
+  // Bind remote screen share stream to video element
+  // No longer needed as VideoStream handles it
 
   const toggleMute = () => {
     const stream = localStreamRef.current;
@@ -396,9 +416,8 @@ function CallContent() {
           const stream = localStreamRef.current;
           stream.getVideoTracks().forEach(t => stream.removeTrack(t));
           stream.addTrack(originalVideoTrackRef.current);
-          if (localVideo.current) {
-            localVideo.current.srcObject = stream;
-          }
+          // Trigger re-render to re-bind VideoStream with updated tracks
+          setLocalStream(new MediaStream(stream.getTracks()));
         }
       }
 
@@ -497,10 +516,8 @@ function CallContent() {
       localStreamRef.current = null;
     }
 
-    // Clear video element
-    if (localVideo.current) {
-      localVideo.current.srcObject = null;
-    }
+    // Clear local stream state
+    setLocalStream(null);
 
     // Navigate back to chat
     router.push(chatId ? `/chats/${chatId}` : '/chats');
@@ -580,15 +597,9 @@ function CallContent() {
           <div className="w-full h-full flex flex-col lg:flex-row gap-2 lg:gap-4">
             {/* Main Screen Share View - Takes full height on mobile */}
             <div className="flex-1 relative rounded-xl lg:rounded-2xl overflow-hidden bg-black border border-white/20 min-h-[60vh] lg:min-h-0">
-              <video
-                autoPlay
-                playsInline
+              <VideoStream
+                stream={remoteStreams[remoteScreenShareUserId]}
                 className="w-full h-full object-contain"
-                ref={(el) => {
-                  if (el && remoteStreams[remoteScreenShareUserId]) {
-                    el.srcObject = remoteStreams[remoteScreenShareUserId];
-                  }
-                }}
               />
               {/* Screen Share Badge */}
               <div className="absolute top-2 left-2 lg:top-3 lg:left-3">
@@ -603,11 +614,9 @@ function CallContent() {
             <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden lg:w-44 pb-2 lg:pb-0">
               {/* Self-view */}
               <div className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-emerald-500/40 aspect-video flex-shrink-0 w-28 lg:w-full">
-                <video
-                  ref={localVideo}
-                  autoPlay
+                <VideoStream
+                  stream={localStream}
                   muted
-                  playsInline
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
@@ -620,13 +629,9 @@ function CallContent() {
                 .filter(([userId]) => userId !== remoteScreenShareUserId)
                 .map(([userId, stream]) => (
                   <div key={userId} className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-white/10 aspect-video flex-shrink-0 w-28 lg:w-full">
-                    <video
-                      autoPlay
-                      playsInline
+                    <VideoStream
+                      stream={stream}
                       className="w-full h-full object-cover"
-                      ref={(el) => {
-                        if (el) el.srcObject = stream;
-                      }}
                     />
                     <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
                       <span className="px-1 py-0.5 lg:px-1.5 bg-black/60 text-white text-[8px] lg:text-[10px] rounded">{getDisplayName(userId)}</span>
@@ -640,11 +645,9 @@ function CallContent() {
           <div className="w-full h-full flex flex-col lg:flex-row gap-2 lg:gap-4">
             {/* Main Screen Share View - Takes full height on mobile */}
             <div className="flex-1 relative rounded-xl lg:rounded-2xl overflow-hidden bg-black border border-white/20 min-h-[60vh] lg:min-h-0">
-              <video
-                ref={screenVideoRef}
-                autoPlay
+              <VideoStream
+                stream={screenStreamRef.current}
                 muted
-                playsInline
                 className="w-full h-full object-contain"
               />
               {/* Screen Share Badge */}
@@ -660,11 +663,9 @@ function CallContent() {
             <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden lg:w-44 pb-2 lg:pb-0">
               {/* Self-view */}
               <div className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-emerald-500/40 aspect-video flex-shrink-0 w-28 lg:w-full">
-                <video
-                  ref={localVideo}
-                  autoPlay
+                <VideoStream
+                  stream={localStream}
                   muted
-                  playsInline
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
@@ -675,13 +676,9 @@ function CallContent() {
               {/* Remote participants */}
               {Object.entries(remoteStreams).map(([userId, stream]) => (
                 <div key={userId} className="relative rounded-lg lg:rounded-xl overflow-hidden bg-slate-800 border border-white/10 aspect-video flex-shrink-0 w-28 lg:w-full">
-                  <video
-                    autoPlay
-                    playsInline
+                  <VideoStream
+                    stream={stream}
                     className="w-full h-full object-cover"
-                    ref={(el) => {
-                      if (el) el.srcObject = stream;
-                    }}
                   />
                   <div className="absolute bottom-1 left-1 lg:bottom-1.5 lg:left-1.5">
                     <span className="px-1 py-0.5 lg:px-1.5 bg-black/60 text-white text-[8px] lg:text-[10px] rounded">{getDisplayName(userId)}</span>
@@ -710,11 +707,9 @@ function CallContent() {
                       )}
                     </div>
                   ) : (
-                    <video
-                      ref={localVideo}
-                      autoPlay
+                    <VideoStream
+                      stream={localStream}
                       muted
-                      playsInline
                       className="w-full h-full object-cover"
                     />
                   )}
@@ -760,11 +755,9 @@ function CallContent() {
                       </div>
                     </div>
                   ) : (
-                    <video
-                      ref={localVideo}
-                      autoPlay
+                    <VideoStream
+                      stream={localStream}
                       muted
-                      playsInline
                       className="w-full h-full object-cover"
                     />
                   )}
@@ -784,13 +777,9 @@ function CallContent() {
                 {/* Remote Videos */}
                 {Object.entries(remoteStreams).map(([userId, stream]) => (
                   <div key={userId} className="relative aspect-video rounded-xl overflow-hidden bg-slate-800 border border-white/10">
-                    <video
-                      autoPlay
-                      playsInline
+                    <VideoStream
+                      stream={stream}
                       className="w-full h-full object-cover"
-                      ref={(el) => {
-                        if (el) el.srcObject = stream;
-                      }}
                     />
                     <div className="absolute bottom-2 left-2">
                       <span className="px-2 py-0.5 bg-black/50 text-white text-xs rounded">{getDisplayName(userId)}</span>
