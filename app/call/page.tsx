@@ -12,18 +12,22 @@ import { cn } from '@/lib/utils';
 const VideoStream = ({ stream, muted, className, ...props }: { stream: MediaStream | null; muted?: boolean; className?: string;[key: string]: any }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const handlePlay = useCallback(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(err => {
+        console.warn('[VideoStream] Play intercepted/failed:', err);
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (videoRef.current && stream) {
       if (videoRef.current.srcObject !== stream) {
         videoRef.current.srcObject = stream;
       }
-
-      // Explicitly call play() to ensure audio/video starts even if browser throttles autoPlay
-      videoRef.current.play().catch(err => {
-        console.warn('[VideoStream] Play intercepted/failed:', err);
-      });
+      handlePlay();
     }
-  }, [stream]);
+  }, [stream, handlePlay]);
 
   return (
     <video
@@ -32,7 +36,38 @@ const VideoStream = ({ stream, muted, className, ...props }: { stream: MediaStre
       playsInline
       muted={muted}
       className={className}
+      onLoadedMetadata={handlePlay}
       {...props}
+    />
+  );
+};
+
+const AudioStream = ({ stream, muted }: { stream: MediaStream | null; muted?: boolean }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const handlePlay = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(err => {
+        console.warn('[AudioStream] Play intercepted/failed:', err);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current && stream) {
+      if (audioRef.current.srcObject !== stream) {
+        audioRef.current.srcObject = stream;
+      }
+      handlePlay();
+    }
+  }, [stream, handlePlay]);
+
+  return (
+    <audio
+      ref={audioRef}
+      autoPlay
+      muted={muted}
+      onLoadedMetadata={handlePlay}
     />
   );
 };
@@ -801,9 +836,13 @@ const ParticipantTile = ({ stream, name, isMe, isMuted, isOff, isScreenShare }: 
     isScreenShare ? "ring-2 ring-blue-500 ring-offset-4 ring-offset-[#0f0f13]" : ""
   )}>
     {/* Always render VideoStream so audio keeps playing, but hide it visually if isOff is true */}
-    <div className={cn("w-full h-full", isOff && "opacity-0 absolute inset-0 pointer-events-none")}>
+    {/* We use opacity-5 instead of opacity-0 to prevent some browsers from throttling "invisible" media */}
+    <div className={cn("w-full h-full", isOff && "opacity-[0.01] pointer-events-none absolute inset-0")}>
       <VideoStream stream={stream} muted={isMe} className="w-full h-full object-cover" />
     </div>
+
+    {/* Dedicated AudioStream for remote participants to ensure voice reliability even if video throttles */}
+    {!isMe && <AudioStream stream={stream} />}
 
     {isOff && (
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 backdrop-blur-md">
