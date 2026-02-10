@@ -1,66 +1,77 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Video,
   MessageSquare,
-  Zap,
   Shield,
-  ArrowRight,
   Menu,
   X,
-  Play,
-  Maximize2,
-  Grid
+  Command,
+  ArrowRight,
+  Twitter,
+  Github,
+  Disc as Discord
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { HeroSection } from '@/components/landing/HeroSection';
 
-const IncomingCallCard = () => (
-  <div className="bg-[var(--background-modal)]/90 backdrop-blur-xl text-[var(--text-primary)] p-4 sm:p-5 rounded-md shadow-2xl border border-[var(--border-color)] flex flex-col items-center w-48 sm:w-64 relative overflow-hidden group cursor-pointer hover:-translate-y-1 transition-transform duration-300 ring-1 ring-[var(--accent-primary)]/20 scale-75 sm:scale-100 origin-bottom-right">
-    {/* Subtle Top Gradient Line */}
-    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--accent-primary)] to-transparent opacity-70"></div>
+// --- Utility Components ---
 
-    {/* Ambient Background Glow */}
-    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-[var(--accent-primary)]/10 blur-3xl rounded-full pointer-events-none"></div>
+const SpotlightCard = ({ children, className = "", spotlightColor = "rgba(124, 93, 250, 0.1)" }: { children: React.ReactNode, className?: string, spotlightColor?: string }) => {
+  const divRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [opacity, setOpacity] = useState(0);
 
-    {/* Pulsing Icon */}
-    <div className="relative mb-3 mt-1 sm:mb-4 sm:mt-2">
-      <div className="absolute inset-0 bg-[var(--accent-primary)]/30 rounded-full animate-ping opacity-20 duration-1000"></div>
-      <div className="w-10 h-10 sm:w-14 sm:h-14 bg-[var(--background-secondary)] rounded-full flex items-center justify-center border border-[var(--border-color)] relative z-10 text-[var(--text-primary)] shadow-lg shadow-[var(--accent-primary)]/10">
-        <Video size={18} className="text-[var(--accent-primary)] sm:w-6 sm:h-6" />
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!divRef.current) return;
+    const rect = divRef.current.getBoundingClientRect();
+    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
+  const handleMouseEnter = () => setOpacity(1);
+  const handleMouseLeave = () => setOpacity(0);
+
+  return (
+    <div
+      ref={divRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={cn(
+        "relative overflow-hidden rounded-md bg-[var(--background-secondary)] border border-[var(--border-color)] hover:border-[var(--accent-primary)]/20 transition-colors duration-300",
+        className
+      )}
+    >
+      <div
+        className="pointer-events-none absolute -inset-px opacity-0 transition duration-300"
+        style={{
+          opacity,
+          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 40%)`,
+        }}
+      />
+      <div className="relative h-full z-10">{children}</div>
+    </div>
+  );
+};
+
+const DotGlobe = () => {
+  return (
+    <div className="relative flex items-center justify-center w-full h-full perspective-1000">
+      <div className="w-48 h-48 relative animate-spin-slow preserve-3d">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="absolute inset-0 rounded-full border border-[var(--accent-primary)]/10" style={{ transform: `rotateY(${i * 60}deg)` }}></div>
+        ))}
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="absolute inset-0 rounded-full border border-[var(--accent-primary)]/10" style={{ transform: `rotateX(${i * 60}deg)` }}></div>
+        ))}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[var(--accent-primary)]/5 to-transparent blur-xl"></div>
       </div>
     </div>
+  );
+};
 
-    {/* Text Content */}
-    <h3 className="text-sm sm:text-base font-light tracking-tight text-[var(--text-primary)]">Incoming call...</h3>
-    <p className="text-[9px] sm:text-[10px] text-[var(--text-secondary)] mt-0.5 sm:mt-1 mb-4 sm:mb-5 uppercase tracking-widest font-light text-center">Design Team</p>
-
-    {/* Minimalist Action Indicators */}
-    <div className="flex space-x-2 sm:space-x-3 w-full px-1">
-      <button className="flex-1 h-8 sm:h-9 rounded-sm bg-[var(--danger)]/10 hover:bg-[var(--danger)]/20 text-[var(--danger)] flex items-center justify-center transition-colors border border-[var(--danger)]/20">
-        <X size={14} />
-      </button>
-      <button className="flex-1 h-8 sm:h-9 rounded-sm bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-primary)]/20 flex items-center justify-center hover:bg-[var(--accent-hover)] transition-colors animate-pulse">
-        <Video size={14} />
-      </button>
-    </div>
-  </div>
-);
-
-const FloatingToolbar = () => (
-  <div className="bg-[var(--background-modal)]/80 backdrop-blur-md p-2 rounded-md flex flex-col items-center space-y-2 shadow-2xl border border-[var(--border-color)] text-[var(--text-muted)] ring-1 ring-white/5">
-    <div className="p-3 hover:bg-[var(--background-hover)] rounded-sm cursor-pointer hover:text-[var(--text-primary)] transition-colors">
-      <Grid size={18} />
-    </div>
-    <div className="p-3 hover:bg-[var(--background-hover)] rounded-sm cursor-pointer hover:text-[var(--text-primary)] transition-colors">
-      <Zap size={18} />
-    </div>
-    <div className="p-3 hover:bg-[var(--background-hover)] rounded-sm cursor-pointer hover:text-[var(--text-primary)] transition-colors">
-      <Maximize2 size={18} />
-    </div>
-  </div>
-);
 
 const LandingPageDark = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -116,135 +127,184 @@ const LandingPageDark = () => {
         )}
       </nav>
 
-      {/* --- Hero Section --- */}
-      <section className="relative pt-28 pb-16 lg:pt-40 lg:pb-32 overflow-visible">
-        {/* Ambient background glows */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-[var(--accent-primary)]/5 blur-[120px] rounded-full pointer-events-none"></div>
+      <HeroSection />
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-          <div className="text-center max-w-4xl mx-auto mb-12 sm:mb-16">
-            <div className="inline-flex items-center space-x-2 bg-white/5 border border-white/10 rounded-full px-3 py-1 mb-6 backdrop-blur-md">
-              <span className="flex h-1.5 w-1.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--success)] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--success)]"></span>
-              </span>
-              <span className="text-[10px] font-light tracking-widest text-gray-300 uppercase">v2.0 is now available</span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extralight tracking-tighter text-[var(--text-primary)] mb-6 sm:mb-8 leading-[1.1]">
-              Focus on the <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent-primary)] via-purple-400 to-indigo-400 animate-gradient">work that matters.</span>
-            </h1>
-            <p className="text-base sm:text-xl text-[var(--text-secondary)] mb-8 sm:mb-10 font-light tracking-tight leading-relaxed max-w-2xl mx-auto">
-              A minimalist workspace designed for the dark mode generation. Experience team communication with zero clutter and maximum contrast.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <button
-                onClick={() => router.push('/login')}
-                className="w-full sm:w-auto px-8 py-3 bg-[var(--accent-primary)] text-white rounded-sm font-light tracking-tight shadow-lg shadow-[var(--accent-primary)]/20 hover:bg-[var(--accent-hover)] hover:scale-[1.02] transition-all duration-300"
-              >
-                Start Free Trial
-              </button>
-              <button className="w-full sm:w-auto px-8 py-3 bg-[var(--background-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-sm font-light tracking-tight hover:bg-[var(--background-hover)] transition-all flex items-center justify-center group">
-                <Play size={18} className="mr-2 fill-[var(--text-primary)] group-hover:scale-110 transition-transform" /> Watch Demo
-              </button>
-            </div>
-          </div>
-
-          {/* --- Abstract App Interface Showcase --- */}
-          <div className="relative max-w-5xl mx-auto mt-12 sm:mt-20">
-            {/* Background Glows Behind Interface */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-gradient-to-r from-[var(--accent-primary)]/10 to-blue-500/5 blur-[80px] -z-10 rounded-full"></div>
-
-            {/* Main Window Container */}
-            <div className="bg-[var(--background-secondary)] rounded-md shadow-2xl border border-[var(--border-color)] ring-1 ring-white/5 aspect-[16/10] sm:aspect-video lg:aspect-[16/10] relative overflow-hidden">
-
-              {/* Sidebar Skeleton */}
-              <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-20 border-r border-[var(--border-color)] bg-[var(--background-primary)] hidden sm:flex flex-col items-center py-20 space-y-6">
-                <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-sm bg-[var(--background-tertiary)] animate-pulse"></div>
-                <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-sm bg-[var(--background-tertiary)]/50 hover:bg-[var(--background-hover)] transition-colors cursor-pointer"></div>
-                <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-sm bg-[var(--background-tertiary)]/50 hover:bg-[var(--background-hover)] transition-colors cursor-pointer"></div>
-                <div className="mt-auto w-6 h-6 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[var(--accent-primary)] to-indigo-500"></div>
-              </div>
-
-              {/* Header Skeleton */}
-              <div className="absolute top-0 left-0 sm:left-20 right-0 h-12 sm:h-16 border-b border-[var(--border-color)] flex items-center px-4 sm:px-8 bg-[var(--background-secondary)]/80 backdrop-blur-sm z-10">
-                <div className="h-2.5 sm:h-3 w-24 sm:w-32 bg-[var(--background-tertiary)] rounded-full"></div>
-                <div className="ml-auto flex items-center space-x-3">
-                  <div className="h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full bg-[var(--success)] shadow-[0_0_10px_rgba(34,197,94,0.3)]"></div>
-                  <div className="text-[8px] sm:text-[10px] text-[var(--text-muted)] tracking-widest uppercase font-light">LIVE</div>
-                </div>
-              </div>
-
-              {/* Content Area */}
-              <div className="absolute inset-0 top-12 sm:top-16 left-0 sm:left-20 p-4 sm:p-12 bg-[var(--background-secondary)]">
-                <div className="flex flex-col space-y-4 sm:space-y-6 max-w-2xl mx-auto h-full justify-center">
-                  {/* Incoming Message Skeleton */}
-                  <div className="flex items-start">
-                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[var(--background-tertiary)] mr-3 sm:mr-4 shrink-0 border border-[var(--border-color)]"></div>
-                    <div className="space-y-1.5 sm:space-y-2 w-full max-w-[180px] sm:max-w-md">
-                      <div className="h-8 sm:h-10 w-full bg-[var(--background-primary)] rounded-sm rounded-tl-none border border-[var(--border-color)] p-3 sm:p-4 flex items-center">
-                        <div className="h-1 sm:h-1.5 w-3/4 bg-[var(--background-tertiary)] rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Outgoing Message (Accent Bubble) */}
-                  <div className="flex items-end justify-end">
-                    <div className="bg-gradient-to-br from-[var(--accent-primary)] to-[#5b37d8] p-3 sm:p-4 rounded-sm rounded-tr-none shadow-lg shadow-[var(--accent-primary)]/20 text-white max-w-[200px] sm:max-w-md transform transition-all hover:scale-[1.01] cursor-default border border-white/10">
-                      <div className="flex items-center space-x-2 mb-1.5 sm:mb-2 opacity-70">
-                        <div className="w-12 sm:w-16 h-1 sm:h-1.5 bg-white rounded-full"></div>
-                      </div>
-                      <div className="space-y-1 sm:space-y-1.5">
-                        <div className="w-full h-1 sm:h-1.5 bg-white/90 rounded-full"></div>
-                        <div className="w-2/3 h-1 sm:h-1.5 bg-white/90 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 1. Floating Toolbar (Right Side) */}
-                <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 hidden lg:block animate-fade-in-up">
-                  <FloatingToolbar />
-                </div>
-
-                {/* 2. Incoming Call Card (Bottom Right) */}
-                <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-20 z-20 animate-bounce-slow">
-                  <IncomingCallCard />
-                </div>
-
-              </div>
-
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:24px_24px] sm:bg-[size:32px_32px] pointer-events-none"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- Features Strip --- */}
-      <section className="py-20 sm:py-24 bg-[var(--background-primary)] border-t border-[var(--border-color)]">
+      {/* --- Bento Grid Features --- */}
+      <section className="py-24 sm:py-32 bg-[var(--background-primary)] border-t border-[var(--border-color)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid md:grid-cols-3 gap-8 sm:gap-12">
-            {[
-              { title: "Fluid Conversations", desc: "No more refresh. Messages flow in real-time with zero latency.", icon: MessageSquare },
-              { title: "Crystal Clear Video", desc: "4k supported video calls that feel like you're in the same room.", icon: Video },
-              { title: "Secure by Default", desc: "End-to-end encryption for every single interaction.", icon: Shield }
-            ].map((f, i) => (
-              <div key={i} className="flex flex-col items-start p-6 rounded-md bg-[var(--background-secondary)] border border-[var(--border-color)] hover:bg-[var(--background-hover)] transition-all group cursor-default">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--accent-primary)]/10 rounded-sm flex items-center justify-center text-[var(--accent-primary)] mb-5 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <f.icon size={20} className="sm:w-5.5 sm:h-5.5" />
+          <div className="mb-16 md:mb-24 text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-light mb-6 tracking-tight text-[var(--text-primary)]">
+              Built for the <span className="text-[var(--accent-primary)]">flow state.</span>
+            </h2>
+            <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed font-light">
+              Every pixel is designed to keep you focused. We removed the clutter so you can remove the friction.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+            {/* 1. Large Card: Fluid Conversations */}
+            <SpotlightCard className="md:col-span-4 p-8 sm:p-10 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 bg-[var(--background-primary)] border border-[var(--border-color)] rounded-sm flex items-center justify-center text-[var(--accent-primary)] mb-6">
+                  <MessageSquare size={24} />
                 </div>
-                <h3 className="text-lg sm:text-xl font-light tracking-tight text-[var(--text-primary)] mb-2 sm:mb-3">{f.title}</h3>
-                <p className="text-sm sm:text-base text-[var(--text-secondary)] font-light tracking-tight leading-relaxed">{f.desc}</p>
+                <h3 className="text-xl sm:text-2xl font-light text-white mb-3">Fluid Conversations</h3>
+                <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-8 max-w-sm">
+                  Real-time messaging engine that handles millions of events per second with zero latency.
+                </p>
               </div>
-            ))}
+
+              <div className="w-full h-40 bg-black/40 rounded border border-white/5 flex items-center justify-center relative overflow-hidden group/graph">
+                <div className="flex items-end space-x-1.5 h-20">
+                  {[40, 65, 30, 85, 50, 95, 70, 45, 60, 80, 55, 90].map((h, i) => (
+                    <div
+                      key={i}
+                      className="w-2.5 bg-[#5d5da1]/20 rounded-t-[1px] group-hover/graph:bg-[#5d5da1]/40 transition-colors duration-500"
+                      style={{ height: `${h}%` }}
+                    ></div>
+                  ))}
+                </div>
+                <div className="absolute top-4 right-6 text-[10px] font-mono text-[var(--status-online)] uppercase tracking-wider">
+                  Latency: 12ms
+                </div>
+              </div>
+            </SpotlightCard>
+
+            {/* 2. Tall Card: Universal Search */}
+            <SpotlightCard className="md:col-span-2 md:row-span-2 p-8 sm:p-10 flex flex-col h-full">
+              <div className="w-12 h-12 bg-[var(--background-primary)] border border-[var(--border-color)] rounded-sm flex items-center justify-center text-[var(--accent-primary)] mb-6">
+                <Menu size={24} />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-light text-white mb-3">Universal Search</h3>
+              <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-10">
+                Find any message, file, or link instantly across your entire workspace.
+              </p>
+
+              <div className="space-y-4 mt-auto">
+                {[
+                  { color: 'text-purple-500', w: 'w-24' },
+                  { color: 'text-blue-500', w: 'w-40', opacity: 'opacity-60' },
+                  { color: 'text-[var(--status-online)]', w: 'w-20', opacity: 'opacity-40' }
+                ].map((item, i) => (
+                  <div key={i} className={cn("bg-white/5 p-4 rounded-sm border border-white/5 flex items-center space-x-3", item.opacity)}>
+                    <div className={cn("w-2 h-2 rounded-full bg-current", item.color)}></div>
+                    <div className={cn("h-1.5 bg-white/10 rounded-full", item.w)}></div>
+                  </div>
+                ))}
+              </div>
+            </SpotlightCard>
+
+            {/* 3. Small Card: Enterprise Security */}
+            <SpotlightCard className="md:col-span-2 p-8 sm:p-10">
+              <div className="w-12 h-12 bg-[var(--background-primary)] border border-[var(--border-color)] rounded-sm flex items-center justify-center text-[var(--accent-primary)] mb-6">
+                <Shield size={24} />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-light text-white mb-3 tracking-tight">Enterprise Security</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                SOC2 Type II certified. End-to-end encryption by default for all communication.
+              </p>
+            </SpotlightCard>
+
+            {/* 4. Small Card: Global Network */}
+            <SpotlightCard className="md:col-span-2 p-8 sm:p-10 relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-[var(--background-primary)] border border-[var(--border-color)] rounded-sm flex items-center justify-center text-[var(--accent-primary)] mb-6">
+                  <div className="w-6 h-6 rounded-full border border-current opacity-40"></div>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-light text-white mb-3 tracking-tight">Global Edge</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Optimized message routing through 35 cities worldwide for zero lag.
+                </p>
+              </div>
+              <div className="absolute right-[-20px] bottom-[-20px] opacity-20 pointer-events-none">
+                <DotGlobe />
+              </div>
+            </SpotlightCard>
           </div>
         </div>
       </section>
 
       {/* --- Footer --- */}
-      <footer className="border-t border-[var(--border-color)] bg-[var(--background-primary)] py-12">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-[var(--text-muted)] font-light tracking-widest text-[10px] sm:text-xs uppercase">© 2026 Prism Inc. Designed for the dark.</p>
+      <footer className="border-t border-[var(--border-color)] bg-[var(--background-primary)] pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-20">
+            {/* Logo & Newsletter */}
+            <div className="col-span-2 space-y-8">
+              <div className="flex items-center space-x-3 group cursor-pointer">
+                <div className="w-10 h-10 bg-[var(--accent-primary)] rounded-sm flex items-center justify-center text-white shadow-lg shadow-[var(--accent-primary)]/20">
+                  <Command size={20} />
+                </div>
+                <span className="text-xl font-light tracking-tight text-[var(--text-primary)]">Prism</span>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[var(--text-secondary)] text-sm font-light leading-relaxed max-w-xs">
+                  A high-fidelity communication workspace designed for the dark mode generation.
+                </p>
+                <div className="relative max-w-xs">
+                  <input
+                    type="email"
+                    placeholder="Join the newsletter"
+                    className="w-full bg-[var(--background-secondary)] border border-[var(--border-color)] rounded-sm py-3 pl-4 pr-12 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]/50 transition-colors placeholder:text-gray-600"
+                  />
+                  <button className="absolute right-1 top-1 p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Nav Columns */}
+            <div>
+              <h4 className="text-[var(--text-primary)] font-medium text-sm mb-6 uppercase tracking-[0.2em]">Product</h4>
+              <ul className="space-y-4 text-sm font-light text-[var(--text-secondary)]">
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Integrations</a></li>
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Pricing</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-[var(--text-primary)] font-medium text-sm mb-6 uppercase tracking-[0.2em]">Company</h4>
+              <ul className="space-y-4 text-sm font-light text-[var(--text-secondary)]">
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Press</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-[var(--text-primary)] font-medium text-sm mb-6 uppercase tracking-[0.2em]">Resources</h4>
+              <ul className="space-y-4 text-sm font-light text-[var(--text-secondary)]">
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Community</a></li>
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">API Docs</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-[var(--text-primary)] font-medium text-sm mb-6 uppercase tracking-[0.2em]">Legal</h4>
+              <ul className="space-y-4 text-sm font-light text-[var(--text-secondary)]">
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Privacy</a></li>
+                <li><a href="#" className="hover:text-[var(--accent-primary)] transition-colors">Terms</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-[var(--border-color)] pt-8 flex flex-col md:flex-row justify-between items-center text-xs font-light tracking-widest text-[var(--text-muted)] uppercase">
+            <p className="mb-4 md:mb-0">© 2026 Prism Inc. All rights reserved.</p>
+            <div className="flex space-x-8">
+              <a href="#" className="hover:text-[var(--text-primary)] transition-colors flex items-center gap-2">
+                <Twitter size={14} /> <span>Twitter</span>
+              </a>
+              <a href="#" className="hover:text-[var(--text-primary)] transition-colors flex items-center gap-2">
+                <Github size={14} /> <span>GitHub</span>
+              </a>
+              <a href="#" className="hover:text-[var(--text-primary)] transition-colors flex items-center gap-2">
+                <Discord size={14} /> <span>Discord</span>
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
 
@@ -278,6 +338,19 @@ const LandingPageDark = () => {
         }
         .animate-fade-in-down {
           animation: fade-in-down 0.4s ease-out forwards;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin 12s linear infinite;
+        }
+        .perspective-1000 {
+           perspective: 1000px;
+        }
+        .preserve-3d {
+           transform-style: preserve-3d;
         }
       `}</style>
     </div>
