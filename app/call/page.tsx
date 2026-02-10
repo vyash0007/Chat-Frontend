@@ -220,6 +220,25 @@ function CallContent() {
     };
   }, []);
 
+  // Add tracks if localStream becomes available after peers are created
+  useEffect(() => {
+    if (localStream) {
+      Object.values(peersRef.current).forEach(pc => {
+        const senders = pc.getSenders();
+        localStream.getTracks().forEach(track => {
+          const sender = senders.find(s => s.track?.kind === track.kind);
+          if (sender) {
+            if (sender.track !== track) {
+              sender.replaceTrack(track);
+            }
+          } else {
+            pc.addTrack(track, localStream);
+          }
+        });
+      });
+    }
+  }, [localStream]);
+
   useEffect(() => {
     if (!socket || !chatId) return;
 
@@ -393,7 +412,7 @@ function CallContent() {
         localStreamRef.current = null;
       }
 
-      socket.disconnect();
+      // socket.disconnect(); // ❌ REMOVED: This was causing chat connection interruption
     };
   }, [createPeerConnection, socket, chatId, isAudioOnly, user?.id]);
 
@@ -507,7 +526,7 @@ function CallContent() {
   const endCall = () => {
     if (socket) {
       socket.emit('leaveCall', { chatId });
-      socket.disconnect();
+      // socket.disconnect(); // ❌ REMOVED: This was causing chat connection interruption
     }
 
     Object.values(peersRef.current).forEach((pc) => pc.close());
@@ -721,14 +740,17 @@ const ParticipantTile = ({ stream, name, isMe, isMuted, isOff, isScreenShare }: 
     isMe ? "border-emerald-500/30 bg-white/5" : "border-white/10 bg-white/5",
     isScreenShare ? "ring-2 ring-blue-500 ring-offset-4 ring-offset-[#0f0f13]" : ""
   )}>
-    {isOff ? (
+    {/* Always render VideoStream so audio keeps playing, but hide it visually if isOff is true */}
+    <div className={cn("w-full h-full", isOff && "opacity-0 absolute inset-0 pointer-events-none")}>
+      <VideoStream stream={stream} muted={isMe} className="w-full h-full object-cover" />
+    </div>
+
+    {isOff && (
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/5 backdrop-blur-md">
         <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl font-bold">
           {name.charAt(0)}
         </div>
       </div>
-    ) : (
-      <VideoStream stream={stream} muted={isMe} className="w-full h-full object-cover" />
     )}
 
     <div className="absolute bottom-4 left-4 flex items-center gap-2">
