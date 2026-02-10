@@ -68,7 +68,7 @@ export const CallListItem: React.FC<CallListItemProps> = ({ item }) => {
 
             <button
                 onClick={handleCall}
-                className="ml-2 p-2 rounded-full bg-[var(--background-tertiary)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] transition-all"
+                className="ml-2 w-8 h-8 flex items-center justify-center rounded-full bg-[var(--background-tertiary)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] transition-all"
                 title={`Call ${item.targetName} back`}
             >
                 {item.isVideoCall ? <FaVideo size={14} /> : <FaPhoneAlt size={14} />}

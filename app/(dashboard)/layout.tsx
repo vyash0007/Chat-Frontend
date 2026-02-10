@@ -64,14 +64,14 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--background-primary)]">
       {/* 1. Primary Sidebar (Slim Icon Bar - Dark) */}
-      <div className="w-16 md:w-[90px] bg-[#1e1f25] flex flex-col items-center py-4 md:py-8 shrink-0 transition-all duration-300">
+      <div className="hidden md:flex w-[90px] bg-[#1e1f25] flex-col items-center py-8 shrink-0 transition-all duration-300">
         <PrimarySidebar />
       </div>
 
       {/* 2. Secondary Sidebar (Chat List) - White */}
       <aside
         className={cn(
-          "w-80 bg-[var(--background-secondary)] border-r border-[var(--border-color)] flex-shrink-0 transition-all duration-300",
+          "w-full md:w-80 bg-[var(--background-secondary)] border-r border-[var(--border-color)] flex-shrink-0 transition-all duration-300 relative",
           isMobile && !sidebarOpen && "hidden"
         )}
       >
@@ -79,9 +79,19 @@ export default function DashboardLayout({
       </aside>
 
       {/* 3. Main Content Area - White */}
-      <main className="flex-1 bg-[var(--background-secondary)] overflow-hidden flex transition-all duration-300 relative">
+      <main className={cn(
+        "flex-1 bg-[var(--background-secondary)] overflow-hidden flex transition-all duration-300 relative",
+        isMobile && "pb-[72px]" // Space for bottom bar
+      )}>
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      {isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 h-[72px] bg-[#1e1f25] border-t border-white/5 z-[var(--z-header)] flex items-center justify-around shadow-[0_-8px_32px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+          <PrimarySidebar layout="horizontal" />
+        </nav>
+      )}
 
       {/* Modals - Centralized at Root */}
       <SearchUsersModal />
