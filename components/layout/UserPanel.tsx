@@ -29,7 +29,19 @@ export const UserPanel: React.FC = () => {
     router.push('/login');
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="mt-auto p-4 border-t border-[var(--border-color)] bg-[var(--background-secondary)]">
+        <div className="flex items-center gap-3 p-2 animate-pulse">
+          <div className="w-10 h-10 rounded-full skeleton" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-20 rounded skeleton" />
+            <div className="h-3 w-12 rounded skeleton" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const currentStatus = user.status || UserStatus.OFFLINE;
 

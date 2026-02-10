@@ -422,14 +422,10 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* Skeleton loading shimmer */
+/* Skeleton loading blinking */
 .skeleton {
-  background: linear-gradient(90deg,
-      var(--background-secondary) 25%,
-      var(--background-tertiary) 50%,
-      var(--background-secondary) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  background-color: var(--background-tertiary);
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* Typing indicator dots */

@@ -217,8 +217,29 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         </div>
       </div>
 
-      {/* Spacer for alignment if no avatar */}
       {isSent && <div className="w-8 flex-shrink-0 lg:hidden" />}
     </div >
+  );
+};
+
+export const MessageBubbleSkeleton: React.FC<{ isSent?: boolean }> = ({ isSent = false }) => {
+  return (
+    <div
+      className={cn(
+        'flex items-end gap-2 md:gap-3 mb-2 px-3 md:px-6 animate-pulse',
+        isSent ? 'flex-row-reverse' : 'flex-row'
+      )}
+    >
+      {!isSent && <div className="w-8 h-8 rounded-full skeleton flex-shrink-0 mb-1" />}
+      <div className={cn(
+        "flex flex-col gap-1 w-full max-w-[70%]",
+        isSent ? "items-end" : "items-start"
+      )}>
+        <div className={cn(
+          "h-10 rounded-md skeleton",
+          isSent ? "w-40 rounded-br-md" : "w-48 rounded-bl-md"
+        )} />
+      </div>
+    </div>
   );
 };

@@ -61,33 +61,6 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     );
 };
 
-// Skeleton loader component
-interface SkeletonProps {
-    className?: string;
-    variant?: 'text' | 'circular' | 'rectangular';
-}
-
-export const Skeleton: React.FC<SkeletonProps> = ({
-    className,
-    variant = 'rectangular',
-}) => {
-    const variantClasses = {
-        text: 'h-4 rounded',
-        circular: 'rounded-full',
-        rectangular: 'rounded-md',
-    };
-
-    return (
-        <div
-            className={cn(
-                'skeleton',
-                variantClasses[variant],
-                className
-            )}
-        />
-    );
-};
-
 // Page loading component
 export const PageLoader: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background-primary)]">

@@ -43,7 +43,25 @@ export default function InvitationsPage() {
           </button>
         </div>
 
-        {pendingInvitations.length === 0 ? (
+        {isLoading && pendingInvitations.length === 0 ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-[var(--background-primary)] rounded-lg p-4 border border-[var(--border-color)] animate-pulse"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full skeleton" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 w-1/3 rounded skeleton" />
+                    <div className="h-3 w-1/4 rounded skeleton" />
+                  </div>
+                  <div className="h-9 w-20 rounded skeleton" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : pendingInvitations.length === 0 ? (
           <div className="bg-[var(--background-primary)] rounded-lg p-8 text-center">
             <svg
               className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4"

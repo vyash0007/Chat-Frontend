@@ -34,6 +34,7 @@ interface CallState {
     incomingCall: IncomingCall | null;
     outgoingCall: OutgoingCall | null;
     callHistory: CallHistoryItem[];
+    isLoading: boolean;
 
     // Actions
     setIncomingCall: (call: IncomingCall | null) => void;
@@ -49,6 +50,7 @@ export const useCallStore = create<CallState>()((set, get) => ({
     incomingCall: null,
     outgoingCall: null,
     callHistory: [],
+    isLoading: false,
 
     setIncomingCall: (call) => set({ incomingCall: call }),
 
@@ -65,6 +67,7 @@ export const useCallStore = create<CallState>()((set, get) => ({
     })),
 
     fetchHistory: async (token: string, currentUserId: string) => {
+        set({ isLoading: true });
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/call/history`, {
                 headers: {
@@ -114,9 +117,10 @@ export const useCallStore = create<CallState>()((set, get) => ({
                 };
             });
 
-            set({ callHistory: history });
+            set({ callHistory: history, isLoading: false });
         } catch (error) {
             console.error('Error fetching call history:', error);
+            set({ isLoading: false });
         }
     },
 

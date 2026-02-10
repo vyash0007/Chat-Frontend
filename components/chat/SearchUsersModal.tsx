@@ -75,8 +75,8 @@ export const SearchUsersModal: React.FC = () => {
           <button
             onClick={() => { setSearchMode('phone'); setSearchResults([]); setSearchQuery(''); }}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${searchMode === 'phone'
-                ? 'bg-[var(--accent-primary)] text-white'
-                : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              ? 'bg-[var(--accent-primary)] text-white'
+              : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
           >
             Phone Number
@@ -84,8 +84,8 @@ export const SearchUsersModal: React.FC = () => {
           <button
             onClick={() => { setSearchMode('email'); setSearchResults([]); setSearchQuery(''); }}
             className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${searchMode === 'email'
-                ? 'bg-[var(--accent-primary)] text-white'
-                : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              ? 'bg-[var(--accent-primary)] text-white'
+              : 'bg-[var(--background-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
           >
             Email
@@ -134,8 +134,19 @@ export const SearchUsersModal: React.FC = () => {
           )}
 
           {isSearching && (
-            <div className="text-center py-8 text-[var(--text-muted)]">
-              Searching...
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-md border border-[var(--divider-color)] animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full skeleton" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-24 rounded skeleton" />
+                      <div className="h-3 w-32 rounded skeleton" />
+                    </div>
+                  </div>
+                  <div className="h-8 w-16 rounded skeleton" />
+                </div>
+              ))}
             </div>
           )}
 

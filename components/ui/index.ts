@@ -1,7 +1,8 @@
 export { Button } from './Button';
 export { Input } from './Input';
 export { Modal } from './Modal';
-export { LoadingSpinner, Skeleton, PageLoader, LoadingDots } from './LoadingSpinner';
+export { LoadingSpinner, PageLoader, LoadingDots } from './LoadingSpinner';
+export { Skeleton } from './Skeleton';
 export { ToastProvider, useToast } from './Toast';
 export type { ButtonProps } from './Button';
 export type { InputProps } from './Input';

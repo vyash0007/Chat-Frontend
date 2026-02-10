@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { ChatListItem } from './ChatListItem';
+import { ChatListItem, ChatListItemSkeleton } from './ChatListItem';
 import { useChatStore, useUIStore, useAuthStore, useCategoryStore } from '@/store';
 import { Input } from '@/components/ui';
 
 export const ChatList: React.FC = () => {
   const { chatId } = useParams();
-  const { chats, fetchChats, typingUsers } = useChatStore();
+  const { chats, fetchChats, typingUsers, isLoading } = useChatStore();
   const { openModal } = useUIStore();
   const { user: currentUser } = useAuthStore();
   const { activeCategory } = useCategoryStore();
@@ -58,7 +58,13 @@ export const ChatList: React.FC = () => {
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto mt-2 custom-scrollbar" role="navigation">
-        {filteredChats.length === 0 ? (
+        {isLoading && chats.length === 0 ? (
+          <div className="px-3 space-y-1">
+            {[...Array(6)].map((_, i) => (
+              <ChatListItemSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredChats.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-10 text-center">
             <p className="text-[var(--text-secondary)] font-medium">
               {searchQuery ? 'No chats found' : 'No conversations yet'}

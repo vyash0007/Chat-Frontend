@@ -1,7 +1,7 @@
 export { ChatList } from './ChatList';
 export { ChatListItem } from './ChatListItem';
 export { ChatHeader } from './ChatHeader';
-export { MessageBubble } from './MessageBubble';
+export { MessageBubble, MessageBubbleSkeleton } from './MessageBubble';
 export { MessageInput } from './MessageInput';
 export { InviteModal } from './InviteModal';
 export { NewChatModal } from './NewChatModal';

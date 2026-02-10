@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CallListItem } from './CallListItem';
+import { CallListItem, CallListItemSkeleton } from './CallListItem';
 import { useCallStore, useAuthStore } from '@/store';
 import { Phone, Search } from 'lucide-react';
 
 export const CallList: React.FC = () => {
-    const { callHistory, fetchHistory } = useCallStore();
+    const { callHistory, fetchHistory, isLoading } = useCallStore();
     const { token, user } = useAuthStore();
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -38,7 +38,13 @@ export const CallList: React.FC = () => {
 
             {/* Call History List */}
             <div className="flex-1 overflow-y-auto mt-2 custom-scrollbar">
-                {filteredHistory.length === 0 ? (
+                {isLoading && callHistory.length === 0 ? (
+                    <div className="px-3 space-y-1">
+                        {[...Array(6)].map((_, i) => (
+                            <CallListItemSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : filteredHistory.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-10 text-center opacity-40">
                         <Phone size={48} className="mb-4 text-[var(--text-muted)]" strokeWidth={1} />
                         <p className="text-[var(--text-secondary)] font-light tracking-tight">

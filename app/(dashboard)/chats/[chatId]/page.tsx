@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { ChatHeader, MessageBubble, MessageInput, GroupInfoPanel } from '@/components/chat';
+import { ChatHeader, MessageBubble, MessageBubbleSkeleton, MessageInput, GroupInfoPanel } from '@/components/chat';
 import { WelcomeScreen } from '@/components/dashboard/WelcomeScreen';
 import { CallInterface } from '@/components/call';
 import { useChatStore, useUIStore, useCallStore } from '@/store';
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 
 export default function ChatPage() {
   const { chatId } = useParams();
-  const { activeChat, messages, fetchMessages, setActiveChat, searchQuery } = useChatStore();
+  const { activeChat, messages, fetchMessages, setActiveChat, searchQuery, isLoading } = useChatStore();
   const { groupInfoPanelOpen } = useUIStore();
   const { incomingCall, outgoingCall, endCall } = useCallStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -80,7 +80,13 @@ export default function ChatPage() {
               aria-atomic="false"
               aria-relevant="additions"
             >
-              {chatMessages.length === 0 ? (
+              {isLoading && chatMessages.length === 0 ? (
+                <div className="space-y-4">
+                  {[...Array(6)].map((_, i) => (
+                    <MessageBubbleSkeleton key={i} isSent={i % 2 === 0} />
+                  ))}
+                </div>
+              ) : chatMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center" role="status" aria-live="polite">
                     <p className="text-[var(--text-muted)]">
