@@ -84,10 +84,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
       case MessageType.AUDIO:
         return (
-          <div className="flex flex-col gap-2 p-2 min-w-[200px]">
+          <div className="flex flex-col gap-2 p-1 min-w-[200px]">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 16 16">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.478 7.478 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z" />
                   <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z" />
                   <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182l-.707.707A3.489 3.489 0 0 1 9.025 8a3.489 3.489 0 0 1-1.025 2.475l.707.707z" />
@@ -95,9 +95,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 </svg>
               </div>
               <audio
+                key={`${message.id}-${message.status}`}
                 src={message.content}
                 controls
-                className="h-8 w-full filter invert brightness-200"
+                className="h-10 w-full"
+                preload="metadata"
+                crossOrigin="anonymous"
+                onPlay={(e) => {
+                  // Fallback for some mobile browsers that need explicit interaction
+                  e.currentTarget.play().catch(() => { });
+                }}
               />
             </div>
           </div>

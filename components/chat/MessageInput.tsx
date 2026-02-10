@@ -74,7 +74,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+
+      // Determine best supported mime type
+      // On Mac/iOS (Safari), audio/mp4 is much more reliable than webm
+      const isApple = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+
+      const mimeType = (isApple && MediaRecorder.isTypeSupported('audio/mp4'))
+        ? 'audio/mp4'
+        : MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : MediaRecorder.isTypeSupported('audio/webm')
+            ? 'audio/webm'
+            : MediaRecorder.isTypeSupported('audio/mp4')
+              ? 'audio/mp4'
+              : 'audio/ogg';
+
+      console.log('[Media] Recording with mimeType:', mimeType);
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -85,8 +102,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await uploadVoiceMessage(audioBlob);
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        await uploadVoiceMessage(audioBlob, mimeType);
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -115,14 +132,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({ chatId }) => {
     }
   };
 
-  const uploadVoiceMessage = async (blob: Blob) => {
+  const uploadVoiceMessage = async (blob: Blob, mimeType: string) => {
     setIsUploading(true);
     setUploadError(null);
     setPreviewUrl('voice');
     setPreviewType('FILE');
 
     try {
-      const file = new File([blob], `voice-message-${Date.now()}.webm`, { type: 'audio/webm' });
+      const extension = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('webm') ? 'webm' : 'ogg';
+      const file = new File([blob], `voice-message-${Date.now()}.${extension}`, { type: mimeType });
       const formData = new FormData();
       formData.append('file', file);
 
