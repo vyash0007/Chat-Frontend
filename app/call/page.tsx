@@ -17,6 +17,11 @@ const VideoStream = ({ stream, muted, className, ...props }: { stream: MediaStre
       if (videoRef.current.srcObject !== stream) {
         videoRef.current.srcObject = stream;
       }
+
+      // Explicitly call play() to ensure audio/video starts even if browser throttles autoPlay
+      videoRef.current.play().catch(err => {
+        console.warn('[VideoStream] Play intercepted/failed:', err);
+      });
     }
   }, [stream]);
 
@@ -82,6 +87,7 @@ function CallContent() {
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [iceReady, setIceReady] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(isAudioOnly);
   const [isConnecting, setIsConnecting] = useState(true);
@@ -159,18 +165,13 @@ function CallContent() {
       };
 
       pc.ontrack = (event) => {
-        console.log('[Call] Received remote track:', event.track.kind, 'from:', targetUserId);
-        setRemoteStreams((prev) => {
-          const existingStream = prev[targetUserId] || new MediaStream();
-          if (!existingStream.getTracks().some(t => t.id === event.track.id)) {
-            existingStream.addTrack(event.track);
-          }
-          // Create a new MediaStream instance to trigger React reactivity
-          return {
-            ...prev,
-            [targetUserId]: new MediaStream(existingStream.getTracks()),
-          };
-        });
+        const remoteStream = event.streams[0] || new MediaStream([event.track]);
+        console.log('[Call] Received remote track:', event.track.kind, 'from:', targetUserId, 'StreamID:', remoteStream.id);
+
+        setRemoteStreams((prev) => ({
+          ...prev,
+          [targetUserId]: remoteStream,
+        }));
         setIsConnecting(false);
       };
 
@@ -248,10 +249,13 @@ function CallContent() {
     fetch(`${API_URL}/call/ice`)
       .then((res) => res.json())
       .then((iceServers) => {
+        console.log('[Call] ICE servers received');
         iceConfigRef.current = { iceServers };
+        setIceReady(true);
       })
       .catch((err) => {
         console.warn('Could not fetch TURN servers, using STUN fallback:', err);
+        setIceReady(true); // Proceed with fallback
       });
 
     // Get media based on call type
@@ -260,11 +264,14 @@ function CallContent() {
       video: !isAudioOnly,
     };
 
+    if (!iceReady) return;
+
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then((stream) => {
         localStreamRef.current = stream;
         setLocalStream(stream);
+        console.log('[Call] Media acquired, joining call socket');
         socket.emit('joinCall', { chatId });
       })
       .catch((err) => {
