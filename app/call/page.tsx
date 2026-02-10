@@ -83,6 +83,7 @@ function CallContent() {
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
   const offerProcessingRef = useRef<Set<string>>(new Set());
   const makingOfferRef = useRef<Record<string, boolean>>({});
+  const pendingIceCandidates = useRef<Record<string, RTCIceCandidateInit[]>>({});
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -343,6 +344,16 @@ function CallContent() {
         if (pc.signalingState !== 'stable') return;
 
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+        // Process queued ICE candidates
+        if (pendingIceCandidates.current[fromUserId]) {
+          console.log('[Call] Processing queued candidates for:', fromUserId);
+          pendingIceCandidates.current[fromUserId].forEach(candidate => {
+            pc.addIceCandidate(candidate).catch(e => console.warn('[Call] Queued ICE Error:', e));
+          });
+          delete pendingIceCandidates.current[fromUserId];
+        }
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('answer', { chatId, targetUserId: fromUserId, answer });
@@ -357,6 +368,15 @@ function CallContent() {
       try {
         if (pc.signalingState !== 'have-local-offer') return;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+        // Process queued ICE candidates
+        if (pendingIceCandidates.current[fromUserId]) {
+          console.log('[Call] Processing queued candidates for:', fromUserId);
+          pendingIceCandidates.current[fromUserId].forEach(candidate => {
+            pc.addIceCandidate(candidate).catch(e => console.warn('[Call] Queued ICE Error:', e));
+          });
+          delete pendingIceCandidates.current[fromUserId];
+        }
       } catch (err) {
         console.error('[Call] Error handling answer:', err);
       }
@@ -364,7 +384,17 @@ function CallContent() {
 
     const onIceCandidate = ({ fromUserId, candidate }: { fromUserId: string; candidate: any }) => {
       const pc = peersRef.current[fromUserId];
-      if (pc) pc.addIceCandidate(candidate);
+      if (pc) {
+        if (pc.remoteDescription) {
+          pc.addIceCandidate(candidate).catch(e => console.warn('[Call] ICE Add Error:', e));
+        } else {
+          console.log('[Call] Queuing ICE candidate for:', fromUserId);
+          if (!pendingIceCandidates.current[fromUserId]) {
+            pendingIceCandidates.current[fromUserId] = [];
+          }
+          pendingIceCandidates.current[fromUserId].push(candidate);
+        }
+      }
     };
 
     const onUserLeftCall = (userId: string) => {
