@@ -149,16 +149,33 @@ function CallContent() {
       pc.onnegotiationneeded = async () => {
         try {
           if (makingOfferRef.current[targetUserId]) return;
-          makingOfferRef.current[targetUserId] = true;
 
+          // Double check state before starting
+          if (pc.signalingState !== 'stable') {
+            console.log('[Call] Negotiation needed but state is:', pc.signalingState, '- waiting');
+            return;
+          }
+
+          makingOfferRef.current[targetUserId] = true;
           console.log('[Call] Negotiation needed for:', targetUserId);
+
           const offer = await pc.createOffer();
-          if (pc.signalingState !== 'stable') return;
+
+          // Re-check state after async createOffer
+          if (pc.signalingState !== 'stable') {
+            console.warn('[Call] Signaling state changed during offer creation:', pc.signalingState);
+            return;
+          }
 
           await pc.setLocalDescription(offer);
           socket.emit('offer', { chatId, targetUserId, offer });
         } catch (err) {
-          console.error('[Call] Error during negotiation:', err);
+          // Gracefully handle state errors during race conditions
+          if (err instanceof DOMException && err.name === 'InvalidStateError') {
+            console.warn('[Call] Caught expected InvalidStateError during glare:', err.message);
+          } else {
+            console.error('[Call] Error during negotiation:', err);
+          }
         } finally {
           makingOfferRef.current[targetUserId] = false;
         }
