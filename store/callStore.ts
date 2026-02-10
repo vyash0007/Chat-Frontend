@@ -14,6 +14,8 @@ export interface OutgoingCall {
     chatId: string;
     isVideoCall: boolean;
     status: 'ringing' | 'accepted' | 'rejected' | 'cancelled';
+    targetName?: string;
+    targetAvatar?: string | null;
 }
 
 export interface CallHistoryItem {
@@ -25,6 +27,7 @@ export interface CallHistoryItem {
     timestamp: Date;
     status: 'incoming' | 'outgoing' | 'missed' | 'rejected';
     duration?: number; // in seconds
+    isGroup?: boolean;
 }
 
 interface CallState {
@@ -75,7 +78,19 @@ export const useCallStore = create<CallState>()((set, get) => ({
 
             const history: CallHistoryItem[] = data.map((item: any) => {
                 const isCaller = item.callerId === currentUserId;
-                const otherUser = isCaller ? item.target : item.caller;
+                const isGroup = item.chat.isGroup;
+
+                let targetName = '';
+                let targetAvatar = null;
+
+                if (isGroup) {
+                    targetName = item.chat.name || 'Group Call';
+                    targetAvatar = item.chat.avatar;
+                } else {
+                    const otherUser = isCaller ? item.target : item.caller;
+                    targetName = otherUser?.name || 'Unknown';
+                    targetAvatar = otherUser?.avatar || null;
+                }
 
                 let status: CallHistoryItem['status'] = 'incoming';
                 if (isCaller) {
@@ -89,12 +104,13 @@ export const useCallStore = create<CallState>()((set, get) => ({
                 return {
                     id: item.id,
                     chatId: item.chatId,
-                    targetName: otherUser.name,
-                    targetAvatar: otherUser.avatar,
+                    targetName,
+                    targetAvatar,
                     isVideoCall: item.isVideo,
                     timestamp: new Date(item.createdAt),
                     status,
-                    duration: item.duration
+                    duration: item.duration,
+                    isGroup
                 };
             });
 

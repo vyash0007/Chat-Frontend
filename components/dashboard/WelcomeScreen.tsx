@@ -13,7 +13,8 @@ export const WelcomeScreen: React.FC = () => {
                     <div className="absolute inset-0 bg-[var(--accent-primary)]/20 blur-2xl rounded-full animate-pulse"></div>
                     <div className="relative w-24 h-24 bg-gradient-to-br from-[var(--background-secondary)] to-[var(--background-primary)] rounded-sm flex items-center justify-center border border-[var(--border-color)] shadow-2xl">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="text-[var(--accent-primary)]">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" />
+                            <path d="M12 3L4 7L12 11L20 7L12 3Z" />
+                            <path d="M12 9L4 13L12 17L20 13L12 9Z" />
                         </svg>
                     </div>
                 </div>

@@ -86,7 +86,10 @@ const LandingPageDark = () => {
           <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[var(--accent-primary)] rounded-sm flex items-center justify-center text-white shadow-lg shadow-[var(--accent-primary)]/20">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="sm:w-6 sm:h-6"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" /></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="sm:w-6 sm:h-6">
+                  <path d="M12 3L4 7L12 11L20 7L12 3Z" />
+                  <path d="M12 9L4 13L12 17L20 13L12 9Z" />
+                </svg>
               </div>
               <span className="text-lg sm:text-xl font-light tracking-tight text-[var(--text-primary)]">Prism</span>
             </div>

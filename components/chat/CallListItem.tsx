@@ -21,7 +21,9 @@ export const CallListItem: React.FC<CallListItemProps> = ({ item }) => {
         setOutgoingCall({
             chatId: item.chatId,
             isVideoCall: item.isVideoCall,
-            status: 'ringing'
+            status: 'ringing',
+            targetName: item.targetName,
+            targetAvatar: item.targetAvatar
         });
     };
 
@@ -41,6 +43,7 @@ export const CallListItem: React.FC<CallListItemProps> = ({ item }) => {
                 <UserAvatar
                     user={null}
                     name={item.targetName}
+                    avatar={item.targetAvatar}
                     size="mdl"
                 />
             </div>
@@ -65,7 +68,7 @@ export const CallListItem: React.FC<CallListItemProps> = ({ item }) => {
 
             <button
                 onClick={handleCall}
-                className="ml-2 p-2 rounded-full bg-[var(--background-tertiary)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] transition-all opacity-0 group-hover:opacity-100"
+                className="ml-2 p-2 rounded-full bg-[var(--background-tertiary)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] transition-all"
                 title={`Call ${item.targetName} back`}
             >
                 {item.isVideoCall ? <FaVideo size={14} /> : <FaPhoneAlt size={14} />}

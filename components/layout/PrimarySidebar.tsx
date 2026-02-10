@@ -67,7 +67,8 @@ export const PrimarySidebar: React.FC = () => {
                     onClick={() => router.push('/chats')}
                 >
                     <svg className="text-[var(--accent-primary)] w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" />
+                        <path d="M12 3L4 7L12 11L20 7L12 3Z" />
+                        <path d="M12 9L4 13L12 17L20 13L12 9Z" />
                     </svg>
                 </div>
             </div>
