@@ -84,6 +84,7 @@ function CallContent() {
   const offerProcessingRef = useRef<Set<string>>(new Set());
   const makingOfferRef = useRef<Record<string, boolean>>({});
   const pendingIceCandidates = useRef<Record<string, RTCIceCandidateInit[]>>({});
+  const mediaRequestPending = useRef(false);
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -183,13 +184,18 @@ function CallContent() {
       };
 
       pc.ontrack = (event) => {
-        const remoteStream = event.streams[0] || new MediaStream([event.track]);
-        console.log('[Call] Received remote track:', event.track.kind, 'from:', targetUserId, 'StreamID:', remoteStream.id);
+        console.log('[Call] Received remote track:', event.track.kind, 'from:', targetUserId);
 
-        setRemoteStreams((prev) => ({
-          ...prev,
-          [targetUserId]: remoteStream,
-        }));
+        setRemoteStreams((prev) => {
+          const stream = prev[targetUserId] || new MediaStream();
+          if (!stream.getTracks().find(t => t.id === event.track.id)) {
+            stream.addTrack(event.track);
+          }
+          return {
+            ...prev,
+            [targetUserId]: new MediaStream(stream.getTracks()),
+          };
+        });
         setIsConnecting(false);
       };
 
@@ -288,6 +294,18 @@ function CallContent() {
       video: !isAudioOnly,
     };
 
+    if (localStreamRef.current || mediaRequestPending.current) {
+      console.log('[Call] Media already exists or request pending, skipping getUserMedia');
+      if (localStreamRef.current && !localStream) {
+        setLocalStream(localStreamRef.current);
+      }
+      if (localStreamRef.current) {
+        socket.emit('joinCall', { chatId });
+      }
+      return;
+    }
+
+    mediaRequestPending.current = true;
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then((stream) => {
@@ -305,6 +323,9 @@ function CallContent() {
         } else {
           setMediaError(`Could not access camera/mic: ${err.message}`);
         }
+      })
+      .finally(() => {
+        mediaRequestPending.current = false;
       });
 
     const onExistingParticipants = async (userIds: string[]) => {
