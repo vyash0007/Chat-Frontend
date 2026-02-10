@@ -128,6 +128,7 @@ function CallContent() {
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(isAudioOnly);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [isCallEnded, setIsCallEnded] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [remoteScreenShareUserId, setRemoteScreenShareUserId] = useState<string | null>(null);
@@ -252,6 +253,23 @@ function CallContent() {
     },
     [socket, chatId],
   );
+
+  // Automatic exit when last participant leaves
+  useEffect(() => {
+    if (Object.keys(remoteStreams).length === 0 && !isConnecting && !isCallEnded) {
+      console.log('[Call] No participants left, preparing to exit...');
+      const timer = setTimeout(() => {
+        // Re-check just in case someone joined in that second
+        if (Object.keys(remoteStreams).length === 0) {
+          setIsCallEnded(true);
+          setTimeout(() => {
+            endCall();
+          }, 1500);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [remoteStreams, isConnecting, isCallEnded]);
 
   // Call duration timer
   useEffect(() => {
@@ -695,6 +713,18 @@ function CallContent() {
           </button>
         </div>
       </header>
+
+      {isCallEnded && (
+        <div className="absolute inset-0 z-[100] bg-[#0f0f13]/90 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-500">
+          <div className="w-24 h-24 rounded-[32px] bg-red-500/20 flex items-center justify-center mb-6">
+            <svg className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.516l2.257-1.13a1 1 0 00.502-1.21L9.184 3.684A1 1 0 008.236 3H5z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Call Ended</h2>
+          <p className="text-white/40">Returning to chat...</p>
+        </div>
+      )}
 
       {mediaError && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
