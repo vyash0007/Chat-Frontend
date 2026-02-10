@@ -257,14 +257,18 @@ function CallContent() {
         console.warn('Could not fetch TURN servers, using STUN fallback:', err);
         setIceReady(true); // Proceed with fallback
       });
+  }, []);
+
+  useEffect(() => {
+    if (!socket || !chatId || !iceReady) return;
+
+    socket.connect();
 
     // Get media based on call type
     const mediaConstraints = {
       audio: true,
       video: !isAudioOnly,
     };
-
-    if (!iceReady) return;
 
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
@@ -285,20 +289,19 @@ function CallContent() {
         }
       });
 
-    socket.on('existingParticipants', async (userIds: string[]) => {
+    const onExistingParticipants = async (userIds: string[]) => {
       console.log('[Call] Existing participants:', userIds);
       for (const userId of userIds) {
-        // Just creating the PC will trigger onnegotiationneeded because of the transceivers
         createPeerConnection(userId);
       }
-    });
+    };
 
-    socket.on('userJoinedCall', async (userId: string) => {
+    const onUserJoinedCall = async (userId: string) => {
       console.log('[Call] User joined:', userId);
       createPeerConnection(userId);
-    });
+    };
 
-    socket.on('offer', async ({ fromUserId, offer }: { fromUserId: string; offer: any }) => {
+    const onOffer = async ({ fromUserId, offer }: { fromUserId: string; offer: any }) => {
       // Prevent duplicate offer processing
       const offerKey = `${fromUserId}-${offer.sdp?.slice(0, 50)}`;
       if (offerProcessingRef.current.has(offerKey)) {
@@ -306,73 +309,48 @@ function CallContent() {
         return;
       }
       offerProcessingRef.current.add(offerKey);
-
-      // Clean up old offer keys after 5 seconds
       setTimeout(() => offerProcessingRef.current.delete(offerKey), 5000);
 
       const pc = createPeerConnection(fromUserId);
       if (!pc) return;
 
-      console.log('[Call] Received offer from:', fromUserId, 'state:', pc.signalingState);
-
       try {
-        // Handle "glare" - when both peers send offers simultaneously
         const isPolite = user?.id && user.id > fromUserId;
-
-        // Check signaling state
-        if (pc.signalingState === 'have-remote-offer') {
-          // Already have an offer, skip
-          console.log('[Call] Already have remote offer, skipping');
-          return;
-        }
+        if (pc.signalingState === 'have-remote-offer') return;
 
         if (pc.signalingState === 'have-local-offer') {
-          if (!isPolite) {
-            console.log('[Call] Ignoring offer collision - we are impolite peer');
-            return;
-          }
-          console.log('[Call] Rolling back local offer - we are polite peer');
+          if (!isPolite) return;
           await pc.setLocalDescription({ type: 'rollback' });
         }
 
-        // Now we should be in stable state
-        if (pc.signalingState !== 'stable') {
-          console.warn('[Call] Cannot process offer in state:', pc.signalingState);
-          return;
-        }
+        if (pc.signalingState !== 'stable') return;
 
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('answer', { chatId, targetUserId: fromUserId, answer });
-        console.log('[Call] Sent answer to:', fromUserId);
       } catch (err) {
         console.error('[Call] Error handling offer:', err);
       }
-    });
+    };
 
-    socket.on('answer', async ({ fromUserId, answer }: { fromUserId: string; answer: any }) => {
+    const onAnswer = async ({ fromUserId, answer }: { fromUserId: string; answer: any }) => {
       const pc = peersRef.current[fromUserId];
       if (!pc) return;
-
       try {
-        // Only set remote description if we're waiting for an answer
-        if (pc.signalingState !== 'have-local-offer') {
-          console.warn('[Call] Ignoring answer - not waiting for answer:', pc.signalingState);
-          return;
-        }
+        if (pc.signalingState !== 'have-local-offer') return;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
       } catch (err) {
         console.error('[Call] Error handling answer:', err);
       }
-    });
+    };
 
-    socket.on('iceCandidate', ({ fromUserId, candidate }: { fromUserId: string; candidate: any }) => {
+    const onIceCandidate = ({ fromUserId, candidate }: { fromUserId: string; candidate: any }) => {
       const pc = peersRef.current[fromUserId];
       if (pc) pc.addIceCandidate(candidate);
-    });
+    };
 
-    socket.on('userLeftCall', (userId: string) => {
+    const onUserLeftCall = (userId: string) => {
       const pc = peersRef.current[userId];
       if (pc) {
         pc.close();
@@ -383,45 +361,52 @@ function CallContent() {
         delete next[userId];
         return next;
       });
-      // Clear remote screen share if that user was sharing
       if (remoteScreenShareUserId === userId) {
         setRemoteScreenShareUserId(null);
       }
-    });
+    };
 
-    // Screen share notifications
-    socket.on('screenShareStarted', ({ userId }: { userId: string }) => {
+    const onScreenShareStarted = ({ userId }: { userId: string }) => {
       console.log('[Call] Remote user started screen sharing:', userId);
       setRemoteScreenShareUserId(userId);
-    });
+    };
 
-    socket.on('screenShareStopped', ({ userId }: { userId: string }) => {
+    const onScreenShareStopped = ({ userId }: { userId: string }) => {
       console.log('[Call] Remote user stopped screen sharing:', userId);
       if (remoteScreenShareUserId === userId) {
         setRemoteScreenShareUserId(null);
       }
-    });
+    };
+
+    socket.on('existingParticipants', onExistingParticipants);
+    socket.on('userJoinedCall', onUserJoinedCall);
+    socket.on('offer', onOffer);
+    socket.on('answer', onAnswer);
+    socket.on('iceCandidate', onIceCandidate);
+    socket.on('userLeftCall', onUserLeftCall);
+    socket.on('screenShareStarted', onScreenShareStarted);
+    socket.on('screenShareStopped', onScreenShareStopped);
 
     return () => {
-      // Cleanup on unmount - ensure camera/mic are released
       console.log('[Call] Cleaning up call resources...');
+      socket.off('existingParticipants', onExistingParticipants);
+      socket.off('userJoinedCall', onUserJoinedCall);
+      socket.off('offer', onOffer);
+      socket.off('answer', onAnswer);
+      socket.off('iceCandidate', onIceCandidate);
+      socket.off('userLeftCall', onUserLeftCall);
+      socket.off('screenShareStarted', onScreenShareStarted);
+      socket.off('screenShareStopped', onScreenShareStopped);
 
-      // Close all peer connections
       Object.values(peersRef.current).forEach((pc) => pc.close());
       peersRef.current = {};
 
-      // Stop all media tracks
       if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => {
-          track.stop();
-          console.log(`[Call] Cleanup: Stopped ${track.kind} track`);
-        });
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
         localStreamRef.current = null;
       }
-
-      // socket.disconnect(); // ❌ REMOVED: This was causing chat connection interruption
     };
-  }, [createPeerConnection, socket, chatId, isAudioOnly, user?.id]);
+  }, [createPeerConnection, socket, chatId, isAudioOnly, user?.id, iceReady]);
 
   // Fetch chats to get participant names
   useEffect(() => {
