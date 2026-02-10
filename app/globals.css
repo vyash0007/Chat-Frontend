@@ -58,6 +58,11 @@
 
   /* Layout Dimensions */
   --primary-nav-width: 80px;
+
+  /* Brand Vibrant (Used for Landing) */
+  --brand-purple: #7c5dfa;
+  --brand-purple-light: #a78bfa;
+
   --sidebar-width: 320px;
   --info-panel-width: 340px;
   --header-height: 80px;
@@ -88,6 +93,16 @@
   --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.brand-theme {
+  --accent-primary: #7c5dfa;
+  --accent-secondary: #6d4aff;
+  --accent-hover: #8b71ff;
+  --accent-active: #5d44cc;
+  --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #7c5dfa 100%);
+  --accent-soft: rgba(124, 93, 250, 0.1);
+  --border-focus: #7c5dfa;
 }
 
 body {

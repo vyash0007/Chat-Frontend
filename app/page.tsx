@@ -78,7 +78,7 @@ const LandingPageDark = () => {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-[var(--background-primary)] font-sans text-[var(--text-primary)] overflow-x-hidden selection:bg-[var(--accent-primary)]/30">
+    <div className="min-h-screen bg-[var(--background-primary)] font-sans text-[var(--text-primary)] overflow-x-hidden selection:bg-[var(--accent-primary)]/30 brand-theme">
 
       {/* --- Navigation --- */}
       <nav className="fixed w-full z-50 bg-[var(--background-primary)]/80 backdrop-blur-lg border-b border-[var(--border-color)]">
@@ -162,7 +162,7 @@ const LandingPageDark = () => {
                   {[40, 65, 30, 85, 50, 95, 70, 45, 60, 80, 55, 90].map((h, i) => (
                     <div
                       key={i}
-                      className="w-2.5 bg-[#5d5da1]/20 rounded-t-[1px] group-hover/graph:bg-[#5d5da1]/40 transition-colors duration-500"
+                      className="w-2.5 bg-[#7c5dfa]/20 group-hover/graph:bg-[#7c5dfa]/40 transition-colors duration-500"
                       style={{ height: `${h}%` }}
                     ></div>
                   ))}

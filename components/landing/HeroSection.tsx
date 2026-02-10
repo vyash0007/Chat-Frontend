@@ -181,7 +181,7 @@ export const HeroSection = () => {
                         {/* Sidebar Skeleton (Primary - Icons) */}
                         <div className="absolute left-0 top-14 bottom-0 w-24 border-r border-white/5 bg-[#0a0a0a]/30 hidden sm:flex flex-col items-center py-10 space-y-8">
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className={`w-12 h-12 rounded-lg cursor-pointer transition-all hover:scale-105 ${i === 1 ? 'bg-[#5d5da1] shadow-lg shadow-[#5d5da1]/20' : 'bg-white/10 hover:bg-white/15'}`}>
+                                <div key={i} className={`w-12 h-12 rounded-lg cursor-pointer transition-all hover:scale-105 ${i === 1 ? 'bg-[#7c5dfa] shadow-lg shadow-[#7c5dfa]/20' : 'bg-white/10 hover:bg-white/15'}`}>
                                 </div>
                             ))}
                             <div className="mt-auto w-12 h-12 rounded-full bg-[var(--accent-gradient)] border-2 border-white/10 shadow-lg shadow-[var(--accent-primary)]/20 mb-6"></div>
