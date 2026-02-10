@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { useAuthStore, useChatStore, useUserStore, useCallStore, IncomingCall } from '@/store';
 import { Message, TypingStatus, MessageStatus } from '@/types';
-import { getSocket, joinChat, leaveChat, emitTyping, emitStopTyping, disconnectSocket, initiateCall, acceptCall, rejectCall, cancelCall } from '@/lib/socket';
+import { getSocket, joinChat, leaveChat, emitTyping, emitStopTyping, emitMarkRead, disconnectSocket, initiateCall, acceptCall, rejectCall, cancelCall } from '@/lib/socket';
 
 // This hook should only be called ONCE in the layout component.
 // For joinChat/leaveChat/emitTyping, import directly from '@/lib/socket'.
@@ -126,6 +126,7 @@ export const useSocket = () => {
     leaveChat,
     emitTyping,
     emitStopTyping,
+    emitMarkRead,
     disconnectSocket,
     initiateCall,
     acceptCall,

@@ -117,7 +117,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
             )}
             {/* Read Status - only show if no unread and I sent the last message */}
             {!hasUnread && chat.lastMessage && chat.lastMessage.senderId === currentUser?.id && (
-              <CheckCheck size={14} className="text-[#a78bfa]" />
+              <CheckCheck size={14} className="text-[var(--accent-primary)]" />
             )}
             {/* Archive Button - Hover Only */}
             <button

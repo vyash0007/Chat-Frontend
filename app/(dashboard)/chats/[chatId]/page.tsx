@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { ChatHeader, MessageBubble, MessageInput, GroupInfoPanel } from '@/components/chat';
 import { WelcomeScreen } from '@/components/dashboard/WelcomeScreen';
@@ -11,13 +11,21 @@ import { cn } from '@/lib/utils';
 
 export default function ChatPage() {
   const { chatId } = useParams();
-  const { activeChat, messages, fetchMessages, setActiveChat } = useChatStore();
+  const { activeChat, messages, fetchMessages, setActiveChat, searchQuery } = useChatStore();
   const { groupInfoPanelOpen } = useUIStore();
   const { incomingCall, outgoingCall, endCall } = useCallStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const chatMessages = chatId ? messages[chatId as string] || [] : [];
+  const chatMessages = useMemo(() => {
+    const allMessages = chatId ? messages[chatId as string] || [] : [];
+    if (!searchQuery) return allMessages;
+
+    console.log('🔍 Filtering messages for query:', searchQuery);
+    return allMessages.filter(m =>
+      m.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [chatId, messages, searchQuery]);
 
   // Check if there's an active call for this chat
   const isInCall = (incomingCall?.chatId === chatId) ||

@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { useChatStore, useUserStore, useUIStore } from '@/store';
+import { useChatStore, useUserStore, useUIStore, useAuthStore } from '@/store';
 import { UserAvatar } from '@/components/user';
+import { UserPlus, X, Trash2 } from 'lucide-react';
+import { AddMemberModal } from './AddMemberModal';
 
 interface GroupInfoPanelProps {
     chatId: string;
@@ -13,10 +15,12 @@ interface GroupInfoPanelProps {
 export const GroupInfoPanel: React.FC<GroupInfoPanelProps> = ({ chatId, className }) => {
     const [showAllPhotos, setShowAllPhotos] = useState(false);
     const [showAllMembers, setShowAllMembers] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const { activeChat, messages } = useChatStore();
+    const { activeChat, messages, removeMember } = useChatStore();
     const { onlineUsers } = useUserStore();
     const { toggleGroupInfoPanel } = useUIStore();
+    const { user: currentUser } = useAuthStore();
 
     if (!activeChat || activeChat.id !== chatId) return null;
 
@@ -126,10 +130,18 @@ export const GroupInfoPanel: React.FC<GroupInfoPanelProps> = ({ chatId, classNam
                     />
                 </div>
 
-                {/* Members Section */}
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-light tracking-tight text-[var(--text-primary)]">{members.length} members</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-light tracking-tight text-[var(--text-primary)]">{members.length} members</h3>
+                            <button
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="p-1 rounded-md hover:bg-[var(--accent-soft)] text-[var(--accent-primary)] transition-all hover:scale-110"
+                                title="Add member"
+                            >
+                                <UserPlus size={16} />
+                            </button>
+                        </div>
                         <button
                             onClick={() => setShowAllMembers(!showAllMembers)}
                             className="p-1 px-2 rounded-md hover:bg-[var(--background-hover)] text-[var(--accent-primary)] text-xs font-light tracking-tight transition-colors"
@@ -143,7 +155,7 @@ export const GroupInfoPanel: React.FC<GroupInfoPanelProps> = ({ chatId, classNam
                         !showAllMembers && "max-h-[300px]"
                     )}>
                         {members.map((member) => (
-                            <div key={member.id} className="flex items-center gap-3 group">
+                            <div key={member.id} className="flex items-center gap-3 group/member">
                                 <UserAvatar
                                     user={member}
                                     size="md"
@@ -155,11 +167,27 @@ export const GroupInfoPanel: React.FC<GroupInfoPanelProps> = ({ chatId, classNam
                                         {onlineUsers.has(member.id) ? 'Online' : 'Offline'}
                                     </div>
                                 </div>
+                                {member.id !== currentUser?.id && (
+                                    <button
+                                        onClick={() => removeMember(chatId, member.id)}
+                                        className="opacity-0 group-hover/member:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-500 transition-all"
+                                        title="Remove member"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
+
+            <AddMemberModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                chatId={chatId}
+                existingMemberIds={members.map(m => m.id)}
+            />
         </div>
     );
 };

@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { Chat, Message, MessageType, MessageStatus, TypingStatus, SendMessagePayload } from '@/types';
 import { getSocket } from '@/lib/socket';
+import { useAuthStore } from './authStore';
 
 interface ChatState {
   chats: Chat[];
@@ -11,6 +12,7 @@ interface ChatState {
   typingUsers: TypingStatus[];
   isLoading: boolean;
   error: string | null;
+  searchQuery: string;
 
   // Actions
   fetchChats: () => Promise<void>;
@@ -25,6 +27,9 @@ interface ChatState {
   removeReaction: (messageId: string, emoji: string) => void;
   createChat: (userIds: string[], name?: string, isGroup?: boolean) => Promise<Chat>;
   archiveChat: (chatId: string) => Promise<void>;
+  addMembers: (chatId: string, userIds: string[]) => Promise<void>;
+  removeMember: (chatId: string, userId: string) => Promise<void>;
+  setSearchQuery: (query: string) => void;
   clearError: () => void;
 }
 
@@ -50,6 +55,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   typingUsers: [],
   isLoading: false,
   error: null,
+  searchQuery: '',
 
   fetchChats: async () => {
     set({ isLoading: true, error: null });
@@ -112,7 +118,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         return true;
       });
 
-      set({ chats, isLoading: false });
+      set({
+        chats: chats.sort((a, b) => {
+          const timeA = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
+          const timeB = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+          return timeB - timeA;
+        }),
+        isLoading: false
+      });
     } catch (error) {
       set({
         isLoading: false,
@@ -137,10 +150,15 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
       const messages: Message[] = await response.json();
 
+      // Sort messages ASCENDING (oldest first) for the chat window
+      const sortedMessages = messages.sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
       set(state => ({
         messages: {
           ...state.messages,
-          [chatId]: messages,
+          [chatId]: sortedMessages,
         },
         isLoading: false,
       }));
@@ -171,10 +189,12 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   sendMessage: (payload: SendMessagePayload) => {
     // Optimistic update - add message immediately with SENDING status
     const tempId = `temp-${Date.now()}`;
+    const currentUserId = useAuthStore.getState().user?.id || '';
+
     const tempMessage: Message = {
       id: tempId,
       chatId: payload.chatId,
-      senderId: '', // Will be set by backend
+      senderId: currentUserId,
       type: payload.type,
       content: payload.content,
       status: MessageStatus.SENDING,
@@ -222,6 +242,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
           chatId: payload.chatId,
           content: payload.content,
           type: payload.type,
+          tempId,
         });
       } else {
         console.log('[Chat] Socket connecting, message queued for send.');
@@ -231,6 +252,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             chatId: payload.chatId,
             content: payload.content,
             type: payload.type,
+            tempId,
           });
         });
       }
@@ -239,46 +261,68 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     trySendMessage();
   },
 
-  addMessage: (message: Message) => {
+  addMessage: (message: Message & { tempId?: string }) => {
     set(state => {
       const currentMessages = state.messages[message.chatId] || [];
 
-      // Remove any temporary messages
-      const filteredMessages = currentMessages.filter(
-        m => !m.id.startsWith('temp-')
-      );
+      // If this message has a tempId, replace the corresponding temp message
+      if (message.tempId) {
+        const index = currentMessages.findIndex(m => m.id === message.tempId);
+        if (index !== -1) {
+          const newMessages = [...currentMessages];
+          newMessages[index] = message;
+          return {
+            messages: {
+              ...state.messages,
+              [message.chatId]: newMessages.sort(
+                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              ),
+            },
+          };
+        }
+      }
 
-      // Check if message already exists
-      const exists = filteredMessages.some(m => m.id === message.id);
+      // Check if message already exists (to prevent duplicates)
+      const exists = currentMessages.some(m => m.id === message.id);
       if (exists) {
         return {
           messages: {
             ...state.messages,
-            [message.chatId]: filteredMessages.map(m =>
+            [message.chatId]: currentMessages.map(m =>
               m.id === message.id ? message : m
             ),
           },
         };
       }
 
+      // If it's a new message from someone else, just add it
       return {
         messages: {
           ...state.messages,
-          [message.chatId]: [...filteredMessages, message].sort(
+          [message.chatId]: [...currentMessages, message].sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           ),
         },
       };
     });
 
-    // Update last message in chat list
-    set(state => ({
-      chats: state.chats.map(chat =>
+    // Update last message and re-sort chats by latest message
+    set(state => {
+      const updatedChats = state.chats.map(chat =>
         chat.id === message.chatId
           ? { ...chat, lastMessage: message }
           : chat
-      ),
-    }));
+      );
+
+      // Sort chats: latest message first
+      const sortedChats = updatedChats.sort((a, b) => {
+        const timeA = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
+        const timeB = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      return { chats: sortedChats };
+    });
   },
 
   updateMessageStatus: (messageId: string, status: MessageStatus) => {
@@ -433,5 +477,64 @@ export const useChatStore = create<ChatState>()((set, get) => ({
     }
   },
 
+  addMembers: async (chatId: string, userIds: string[]) => {
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${API_URL}/chats/${chatId}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add members');
+      }
+
+      const updatedChat: Chat = await response.json();
+
+      set(state => ({
+        chats: state.chats.map(c => c.id === updatedChat.id ? updatedChat : c),
+        activeChat: state.activeChat?.id === updatedChat.id ? updatedChat : state.activeChat,
+      }));
+    } catch (error) {
+      console.error('Failed to add members:', error);
+      throw error;
+    }
+  },
+
+  removeMember: async (chatId: string, userId: string) => {
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${API_URL}/chats/${chatId}/members/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove member');
+      }
+
+      const updatedChat: Chat = await response.json();
+
+      set(state => ({
+        chats: state.chats.map(c => c.id === updatedChat.id ? updatedChat : c),
+        activeChat: state.activeChat?.id === updatedChat.id ? updatedChat : state.activeChat,
+      }));
+    } catch (error) {
+      console.error('Failed to remove member:', error);
+      throw error;
+    }
+  },
+
+  setSearchQuery: (query: string) => set({ searchQuery: query }),
   clearError: () => set({ error: null }),
 }));

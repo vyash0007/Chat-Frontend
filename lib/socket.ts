@@ -74,6 +74,12 @@ export const emitStopTyping = (chatId: string) => {
   }
 };
 
+export const emitMarkRead = (chatId: string, messageId: string) => {
+  if (socket && socket.connected) {
+    socket.emit('markRead', { chatId, messageId });
+  }
+};
+
 // ========== CALL SOCKET METHODS ==========
 
 export const initiateCall = (chatId: string, isVideoCall: boolean) => {

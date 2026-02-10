@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Message, MessageType, MessageStatus } from '@/types';
 import { UserAvatar } from '@/components/user';
 import { ImagePreview, VideoPreview } from '@/components/media';
 import { formatTime, cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
+import { emitMarkRead } from '@/lib/socket';
 
 interface MessageBubbleProps {
   message: Message;
@@ -14,6 +15,14 @@ interface MessageBubbleProps {
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const { user } = useAuthStore();
   const isSent = message.senderId === user?.id;
+
+  useEffect(() => {
+    // Only mark as read if it's not our own message and not already read
+    if (!isSent && message.status !== MessageStatus.READ) {
+      emitMarkRead(message.chatId, message.id);
+    }
+  }, [isSent, message.id, message.chatId, message.status]);
+
 
   const renderContent = () => {
     switch (message.type) {
@@ -71,6 +80,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
           </a>
+        );
+
+      case MessageType.AUDIO:
+        return (
+          <div className="flex flex-col gap-2 p-2 min-w-[200px]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.478 7.478 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z" />
+                  <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z" />
+                  <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182l-.707.707A3.489 3.489 0 0 1 9.025 8a3.489 3.489 0 0 1-1.025 2.475l.707.707z" />
+                  <path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z" />
+                </svg>
+              </div>
+              <audio
+                src={message.content}
+                controls
+                className="h-8 w-full filter invert brightness-200"
+              />
+            </div>
+          </div>
         );
 
       default:
@@ -152,9 +182,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             'relative transition-all duration-200 shadow-sm overflow-hidden',
             (message.type === MessageType.IMAGE || message.type === MessageType.VIDEO) ? 'p-0' : (message.type === MessageType.FILE ? 'p-1' : 'px-3.5 py-2'),
             isSent
-              ? 'bg-gradient-to-br from-[#a78bfa] to-[#8b5cf6] text-white rounded-md rounded-br-md'
+              ? 'text-white rounded-md rounded-br-md'
               : 'bg-[var(--message-received-bg)] text-[var(--message-received-text)] rounded-md rounded-bl-md'
           )}
+          style={isSent ? { background: 'var(--message-sent-bg)' } : {}}
         >
           {/* Message content */}
           <div className="w-full">

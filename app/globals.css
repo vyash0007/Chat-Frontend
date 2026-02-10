@@ -15,16 +15,16 @@
   --text-muted: #6b7280;
   --text-inverse: #ffffff;
 
-  /* Accent Colors - Vibrant Purple */
-  --accent-primary: #8b5cf6;
-  --accent-secondary: #7c3aed;
-  --accent-hover: #6d28d9;
-  --accent-active: #5b21b6;
-  --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-  --accent-soft: rgba(139, 92, 246, 0.1);
+  /* Accent Colors - Muted Purple */
+  --accent-primary: #5d5c8e;
+  --accent-secondary: #4b4a7a;
+  --accent-hover: #4e4d7d;
+  --accent-active: #3e3d61;
+  --accent-gradient: linear-gradient(135deg, #7a79a8 0%, #5d5c8e 100%);
+  --accent-soft: rgba(93, 92, 142, 0.1);
 
   /* Message Bubble Colors */
-  --message-sent-bg: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  --message-sent-bg: linear-gradient(135deg, #7a79a8 0%, #5d5c8e 100%);
   --message-sent-text: #ffffff;
   --message-received-bg: #1c1c21;
   --message-received-text: #f9fafb;
@@ -42,7 +42,7 @@
   /* Border & Divider */
   --border-color: #27272a;
   --divider-color: #18181b;
-  --border-focus: #8b5cf6;
+  --border-focus: #5d5c8e;
 
   /* Glassmorphism */
   --glass-bg: rgba(22, 22, 26, 0.85);
@@ -54,7 +54,7 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.25);
+  --shadow-glow: 0 0 20px rgba(93, 92, 142, 0.25);
 
   /* Layout Dimensions */
   --primary-nav-width: 80px;
